@@ -1,0 +1,10 @@
+use crate::Route;
+use dioxus::prelude::*;
+
+#[component]
+pub fn Settings() -> Element {
+    rsx! {
+        div {
+        }
+    }
+}
