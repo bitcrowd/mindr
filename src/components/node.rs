@@ -3,12 +3,11 @@ use dioxus::prelude::*;
 use uuid::Uuid;
 
 #[component]
-pub fn NodeBox(id: Uuid, store: Store) -> Element {
+pub fn Node(id: Uuid, store: Store) -> Element {
     let node = store.graph.get_node(id).unwrap();
-    let font_size = 14.0;
-    let width = (node.text.len() as f32 * font_size * 0.6 + 20.0).max(80.0);
-    let height = (font_size + 12.0).max(36.0);
-
+    let width = node.width();
+    let height = node.height();
+    let font_size = node.font_size();
     rsx! {
         g {
 

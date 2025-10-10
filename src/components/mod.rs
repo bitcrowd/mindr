@@ -3,7 +3,7 @@
 //! component and an Echo component for fullstack apps to be used in our app.
 
 mod node;
-pub use node::NodeBox;
+pub use node::Node;
 
 mod minimap;
 pub use minimap::MiniMap;

@@ -1,6 +1,8 @@
 use dioxus::prelude::*;
 use uuid::Uuid;
 
+use crate::data::RelativeLocation;
+
 #[derive(Clone, Copy, PartialEq)]
 pub struct Transform {
     pub pan_x: f32,
@@ -17,6 +19,7 @@ pub struct Pane {
     pub transform: Signal<Transform>,
     pub minimap_dragging: Signal<bool>,
     pub minimap_drag_offset: Signal<(f32, f32)>,
+    pub drop_target: Signal<Option<(Uuid, RelativeLocation)>>,
 }
 
 impl Pane {
@@ -33,6 +36,7 @@ impl Pane {
             }),
             minimap_dragging: use_signal(|| false),
             minimap_drag_offset: use_signal(|| (0f32, 0f32)),
+            drop_target: use_signal(|| None),
         }
     }
 

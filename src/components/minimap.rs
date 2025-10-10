@@ -1,31 +1,17 @@
 use crate::data::Store;
-use crate::data::Transform;
 use dioxus::prelude::*;
+
+const MINIMAP_WIDTH: f32 = 150.0;
+const MINIMAP_HEIGHT: f32 = 100.0;
+const MINIMAP_MARGIN: f32 = 100.0;
+const MINIMAP_PADDING: f32 = 10.0;
+
 #[component]
 pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
     let t = *store.pane.transform.read();
-    let nodes = &store.graph.nodes.read();
 
     // Compute bounds of nodes
-    let (min_x, max_x, min_y, max_y) = if !nodes.is_empty() {
-        let min_x = nodes.values().map(|n| n.x).fold(f32::INFINITY, f32::min);
-        let max_x = nodes
-            .values()
-            .map(|n| n.x)
-            .fold(f32::NEG_INFINITY, f32::max);
-        let min_y = nodes.values().map(|n| n.y).fold(f32::INFINITY, f32::min);
-        let max_y = nodes
-            .values()
-            .map(|n| n.y)
-            .fold(f32::NEG_INFINITY, f32::max);
-        (min_x, max_x, min_y, max_y)
-    } else {
-        (0.0, 1.0, 0.0, 1.0)
-    };
-    // Mini-map size and margin
-    let mini_width = 100.0;
-    let mini_height = 100.0;
-    let margin = 100.0;
+    let (min_x, max_x, min_y, max_y) = store.graph.bounds();
 
     // Ensure mini-map scale includes nodes and viewport
     let (svg_w, svg_h) = *svg_size.read();
@@ -35,8 +21,8 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
     let map_width = (max_x - min_x).max(viewport_width).max(1.0);
     let map_height = (max_y - min_y).max(viewport_height).max(1.0);
 
-    let scale_x = mini_width / map_width;
-    let scale_y = mini_height / map_height;
+    let scale_x = MINIMAP_WIDTH / map_width;
+    let scale_y = MINIMAP_HEIGHT / map_height;
     let scale = scale_x.min(scale_y);
 
     // Mindmap coordinates of viewport
@@ -46,23 +32,15 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
     let viewport_bottom = viewport_top + viewport_height;
 
     // Precompute node positions
-    let node_positions: Vec<(f32, f32)> = nodes
-        .values()
-        .map(|node| {
-            (
-                (node.x - min_x) * scale + margin,
-                (node.y - min_y) * scale + margin,
-            )
-        })
-        .collect();
 
     // Precompute viewport rectangle in mini-map coordinates
-    let mini_view_x = (viewport_left - min_x) * scale + margin;
-    let mini_view_y = (viewport_top - min_y) * scale + margin;
+    let mini_view_x = (viewport_left - min_x) * scale + MINIMAP_MARGIN;
+    let mini_view_y = (viewport_top - min_y) * scale + MINIMAP_MARGIN;
     let mini_view_w = (viewport_right - viewport_left) * scale;
     let mini_view_h = (viewport_bottom - viewport_top) * scale;
-    let g_translate_x = svg_w - mini_width - 150.0;
-    let g_translate_y = svg_h - mini_height - 150.0;
+    let g_translate_x = svg_w - MINIMAP_WIDTH - 150.0;
+    let g_translate_y = svg_h - MINIMAP_HEIGHT - 150.0;
+
     let mini_to_world =
         move |dx: f32, dy: f32| -> (f32, f32) { (dx / scale * t.scale, dy / scale * t.scale) };
     rsx! {
@@ -74,15 +52,12 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
                 let coords = evt.element_coordinates();
                 store.pane.minimap_drag_offset.set((coords.x as f32, coords.y as f32));
                 evt.stop_propagation();
-                  let offset_x = svg_w - mini_width - margin;
-                  let offset_y = svg_h - mini_height - margin;
-                  let x = (coords.x as f32 - margin - offset_x) / scale + min_x;
-                  let y = (coords.y as f32 - margin - offset_y) / scale + min_y;
-                    let mut t_new = *store.pane.transform.read();
-                    t_new.pan_x = -x * t.scale;
-                    t_new.pan_y = -y * t.scale;
-                    store.pane.transform.set(t_new);
-
+                let x = (coords.x as f32 - MINIMAP_MARGIN - g_translate_x) / scale + min_x;
+                let y = (coords.y as f32 - MINIMAP_MARGIN - g_translate_y) / scale + min_y;
+                let mut t_new = *store.pane.transform.read();
+                t_new.pan_x = -x * t.scale + svg_w / 2.0;
+                t_new.pan_y = -y * t.scale + svg_h / 2.0;
+                store.pane.transform.set(t_new);
             },
             onmousemove: move |evt| {
                 if *store.pane.minimap_dragging.read() {
@@ -100,22 +75,22 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
             },
             // Mini-map background
             rect {
-                x: "{margin}",
-                y: "{margin}",
-                width: "{mini_width}",
-                height: "{mini_height}",
+                x: "{MINIMAP_MARGIN - MINIMAP_PADDING}",
+                y: "{MINIMAP_MARGIN - MINIMAP_PADDING}",
+                width: "{MINIMAP_WIDTH + 2.0 * MINIMAP_PADDING}",
+                height: "{MINIMAP_HEIGHT + 2.0 * MINIMAP_PADDING}",
                 fill: "white",
                 stroke: "black",
 
                 "stroke-width": "1.0",
             }
 
-            // Nodes
-            for (cx , cy) in node_positions.iter() {
-                circle {
-                    cx: "{cx}",
-                    cy: "{cy}",
-                    r: "3",
+            for node in store.graph.nodes.read().values() {
+                rect {
+                    x: "{(node.x - min_x) * scale + MINIMAP_MARGIN}",
+                    y: "{(node.y - min_y) * scale + MINIMAP_MARGIN}",
+                    width: "{node.width() * scale}",
+                    height: "{node.height() * scale}",
                     fill: "lightblue",
                     stroke: "black",
                 }

@@ -1,5 +1,6 @@
 pub mod node;
 pub use node::Node;
+pub use node::RelativeLocation;
 
 pub mod graph;
 pub use graph::Graph;

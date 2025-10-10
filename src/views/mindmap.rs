@@ -1,24 +1,20 @@
 use crate::components::MiniMap;
-use crate::components::NodeBox;
+use crate::components::Node;
 use crate::data::Store;
 use dioxus::prelude::*;
 
 #[component]
 pub fn Mindmap() -> Element {
     let mut store = Store::new();
-    let panning = *store.pane.panning.read();
-    let dragging = *store.pane.dragging.read();
-    let dragging_str = dragging
-        .map(|v| format!("{}", v))
-        .unwrap_or('-'.to_string());
+    let mut pane = store.pane;
+    let mut graph = store.graph;
 
     let t = *store.pane.transform.read();
     let mut size = use_signal(|| (0f32, 0f32));
     rsx! {
-        div { "panning {panning} {dragging_str}" }
         svg {
             width: "100%",
-            style: "height: calc(100vh - 3em); background:#fafafa;cursor:grab;",
+            style: "height: calc(100vh - 2em); background:#fafafa;cursor:grab; user-select: none; z-index: 999",
             onresize: move |evt| {
                 match evt.data.get_border_box_size() {
                     Ok(sz) => {
@@ -30,43 +26,54 @@ pub fn Mindmap() -> Element {
                 }
             },
             onmouseup: move |_| {
-                store.pane.dragging.set(None);
-                store.pane.minimap_dragging.set(false);
+                pane.dragging.set(None);
+                pane.minimap_dragging.set(false);
                 store.pane.panning.set(false);
+
+                        pane.drop_target.set(None)
             },
             onmouseleave: move |_| {
-                store.pane.dragging.set(None);
-                store.pane.minimap_dragging.set(false);
-                store.pane.panning.set(false);
+                pane.dragging.set(None);
+                pane.minimap_dragging.set(false);
+                pane.panning.set(false);
+                        pane.drop_target.set(None)
             },
             onmousemove: move |evt| {
                 let coords = evt.client_coordinates();
-                let (mx, my) = store.pane.transform(coords.x as f32, coords.y as f32);
-                if let Some(node_id) = *store.pane.dragging.read() {
-                    let (ox, oy) = *store.pane.drag_offset.read();
-                    store.graph.move_node(node_id, mx - ox, my - oy)
+                let (mx, my) = pane.transform(coords.x as f32, coords.y as f32);
+                if let Some(node_id) = *pane.dragging.read() {
+                    let (ox, oy) = *pane.drag_offset.read();
+                    let (x, y) = (mx - ox, my - oy);
+                    graph.move_node(node_id, x, y);
+
+                    for node in graph.nodes.read().values() {
+                      if let Some(location) = node.on(x,y) {
+                        pane.drop_target.set(Some((node_id, location)))
+                      }
+                    }
                 }
-                if *store.pane.panning.read() {
-                    let (start_x, start_y) = *store.pane.pan_offset.read();
-                    store.pane.transform.write().pan_x += coords.x as f32 - start_x;
-                    store.pane.transform.write().pan_y += coords.y as f32 - start_y;
-                    store.pane.pan_offset.set((coords.x as f32, coords.y as f32));
+                if *pane.panning.read() {
+                    let (start_x, start_y) = *pane.pan_offset.read();
+                    pane.transform.write().pan_x += coords.x as f32 - start_x;
+                    pane.transform.write().pan_y += coords.y as f32 - start_y;
+                    pane.pan_offset.set((coords.x as f32, coords.y as f32));
                 }
             },
             onmousedown: move |evt| {
+                evt.prevent_default();
                 let coords = evt.client_coordinates();
-                store.pane.panning.set(true);
-                store.pane.pan_offset.set((coords.x as f32, coords.y as f32));
+                pane.panning.set(true);
+                pane.pan_offset.set((coords.x as f32, coords.y as f32));
             },
 
-            ondblclick: move |evt| {
+            ondoubleclick: move |evt| {
                 let coords = evt.client_coordinates();
-                let (mx, my) = store.pane.transform(coords.x as f32, coords.y as f32);
-                store.graph.add_node(mx, my)
+                let (mx, my) = pane.transform(coords.x as f32, coords.y as f32);
+                graph.add_node(mx, my)
             },
             g { transform: format!("translate({},{}) scale({})", t.pan_x, t.pan_y, t.scale),
-                for node in store.graph.nodes.read().values() {
-                    NodeBox { id: node.id, store: store.clone() }
+                for node in graph.nodes.read().values() {
+                    Node { id: node.id, store: store.clone() }
                 }
             }
             MiniMap { store: store.clone(), svg_size: size.clone() }

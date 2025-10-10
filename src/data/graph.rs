@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct Graph {
     pub nodes: Signal<HashMap<Uuid, Node>>,
 }
@@ -40,5 +40,28 @@ impl Graph {
 
     pub fn get_node(&self, id: Uuid) -> Option<Node> {
         self.nodes.read().get(&id).cloned()
+    }
+
+    pub fn bounds(&self) -> (f32, f32, f32, f32) {
+        if self.nodes.read().is_empty() {
+            return (0.0, 1.0, 0.0, 1.0);
+        }
+
+        self.nodes.read().values().fold(
+            (
+                f32::INFINITY,
+                f32::NEG_INFINITY,
+                f32::INFINITY,
+                f32::NEG_INFINITY,
+            ),
+            |(min_x, max_x, min_y, max_y), n| {
+                (
+                    min_x.min(n.x),
+                    max_x.max(n.x),
+                    min_y.min(n.y),
+                    max_y.max(n.y),
+                )
+            },
+        )
     }
 }
