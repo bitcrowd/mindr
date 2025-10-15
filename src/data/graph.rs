@@ -40,6 +40,13 @@ impl Graph {
         }
     }
 
+    pub fn update_node_text(&mut self, id: Uuid, new_text: String) {
+        let mut nodes = self.nodes.write();
+        if let Some(node) = nodes.get_mut(&id) {
+            node.text = new_text;
+        }
+    }
+
     pub fn move_node_into(&mut self, id: Uuid, target: (Uuid, RelativeLocation)) {
         let mut nodes = self.nodes.write();
         let (target_id, _) = target;
@@ -52,6 +59,16 @@ impl Graph {
                 node.parent_id = None;
             }
         }
+    }
+
+    pub fn on(&self, x: f32, y: f32) -> Option<Node> {
+        let mut target = None;
+        for node in self.nodes.read().values() {
+            if let Some(_) = node.on(x, y) {
+                target = Some(node.clone())
+            }
+        }
+        target
     }
 
     pub fn get_node(&self, id: Uuid) -> Option<Node> {

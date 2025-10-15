@@ -64,7 +64,7 @@ pub fn Mindmap() -> Element {
                     graph.move_node_into(id, target);
                 }
                 pane.dragging.set(None);
-                pane.drop_target.set(None)
+                pane.drop_target.set(None);
             },
             onmouseleave: move |_| {
                 pane.dragging.set(None);
@@ -73,20 +73,21 @@ pub fn Mindmap() -> Element {
                 pane.drop_target.set(None)
             },
             onmousemove: move |evt| {
-                let coords = evt.client_coordinates();
+                let coords = evt.element_coordinates();
                 let (mx, my) = pane.transform(coords.x as f32, coords.y as f32);
                 if let Some(node_id) = *pane.dragging.read() {
                     let (ox, oy) = *pane.drag_offset.read();
                     let (x, y) = (mx - ox, my - oy);
                     graph.move_node(node_id, x, y);
-                    pane.drop_target.set(None);
+                    let mut drop_target = None;
                     for node in graph.nodes.read().values() {
                         if let Some(location) = node.on(x, y) {
                             if node.id != node_id {
-                                pane.drop_target.set(Some((node.id, location)))
+                                drop_target = Some((node.id, location));
                             }
                         }
                     }
+                    pane.drop_target.set(drop_target);
                 }
                 if *pane.panning.read() {
                     let (start_x, start_y) = *pane.pan_offset.read();
@@ -96,16 +97,31 @@ pub fn Mindmap() -> Element {
                 }
             },
             onmousedown: move |evt| {
-                evt.prevent_default();
-                let coords = evt.client_coordinates();
-                pane.panning.set(true);
-                pane.pan_offset.set((coords.x as f32, coords.y as f32));
+                let coords = evt.element_coordinates();
+                if None == *pane.editing.read() {
+                    let (x, y) = pane.transform(coords.x as f32, coords.y as f32);
+                    if let Some(node) = graph.on(x, y) {
+                        pane.dragging.set(Some(node.id));
+                        let ox = x - node.x;
+                        let oy = y - node.y;
+                        pane.drag_offset.set((ox, oy));
+                    } else {
+                        pane.panning.set(true);
+                        pane.pan_offset.set((coords.x as f32, coords.y as f32));
+                    }
+                } else {
+                    pane.editing.set(None)
+                }
             },
-
             ondoubleclick: move |evt| {
-                let coords = evt.client_coordinates();
-                let (mx, my) = pane.transform(coords.x as f32, coords.y as f32);
-                graph.add_node(mx, my)
+                let coords = evt.element_coordinates();
+                let (x, y) = pane.transform(coords.x as f32, coords.y as f32);
+                dbg!(graph.on(x, y));
+                if let Some(node) = graph.on(x, y) {
+                    pane.editing.set(Some(node.id));
+                } else {
+                    graph.add_node(x, y)
+                }
             },
             g { transform: format!("translate({},{}) scale({})", t.pan_x, t.pan_y, t.scale),
                 for link in links {
