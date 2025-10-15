@@ -3,6 +3,8 @@ use dioxus::prelude::*;
 use std::collections::HashMap;
 use uuid::Uuid;
 
+use super::RelativeLocation;
+
 #[derive(Copy, Clone, PartialEq)]
 pub struct Graph {
     pub nodes: Signal<HashMap<Uuid, Node>>,
@@ -35,6 +37,14 @@ impl Graph {
         if let Some(node) = nodes.get_mut(&id) {
             node.x = x;
             node.y = y;
+        }
+    }
+
+    pub fn move_node_into(&mut self, id: Uuid, target: (Uuid, RelativeLocation)) {
+        let mut nodes = self.nodes.write();
+        if let Some(node) = nodes.get_mut(&id) {
+            let (target_id, _) = target;
+            node.parent_id = Some(target_id);
         }
     }
 

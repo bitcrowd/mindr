@@ -5,5 +5,11 @@
 mod node;
 pub use node::Node;
 
+mod node_link;
+pub use node_link::NodeLink;
+
+mod location_indicator;
+pub use location_indicator::LocationIndicator;
+
 mod minimap;
 pub use minimap::MiniMap;
