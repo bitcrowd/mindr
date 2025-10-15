@@ -42,9 +42,15 @@ impl Graph {
 
     pub fn move_node_into(&mut self, id: Uuid, target: (Uuid, RelativeLocation)) {
         let mut nodes = self.nodes.write();
+        let (target_id, _) = target;
         if let Some(node) = nodes.get_mut(&id) {
-            let (target_id, _) = target;
             node.parent_id = Some(target_id);
+        }
+
+        if let Some(node) = nodes.get_mut(&target_id) {
+            if node.parent_id == Some(id) {
+                node.parent_id = None;
+            }
         }
     }
 
