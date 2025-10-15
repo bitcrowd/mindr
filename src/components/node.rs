@@ -27,7 +27,6 @@ pub fn Node(id: Uuid, store: Store) -> Element {
     let width = node.width();
     let height = node.height();
     let font_size = node.font_size();
-    let drop_target = *store.pane.drop_target.read();
     rsx! {
         g {
 
@@ -42,16 +41,40 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                 store.pane.drag_offset.set((ox, oy));
             },
 
-            rect {
-                x: format!("{}", -width / 2.0),
-                y: format!("{}", -height / 2.0),
-                width: format!("{}", width),
-                height: format!("{}", height),
-                rx: "12",
-                ry: "12",
-                fill: "lightblue",
-                stroke: "black",
-                "stroke-width": "1.5",
+            if None == node.parent_id {
+                rect {
+                    x: format!("{}", -width / 2.0),
+                    y: format!("{}", -height / 2.0),
+                    width: format!("{}", width + 4.0),
+                    height: format!("{}", height + 4.0),
+                    rx: "20",
+                    ry: "20",
+                    fill: "rgba(0,0,0,0.3)",
+                }
+
+                rect {
+                    x: format!("{}", -width / 2.0),
+                    y: format!("{}", -height / 2.0),
+                    width: format!("{}", width),
+                    height: format!("{}", height),
+                    rx: "20",
+                    ry: "20",
+                    fill: "lightblue",
+                    stroke: "black",
+                    "stroke-width": "2",
+                }
+            } else {
+                rect {
+                    x: format!("{}", -width / 2.0),
+                    y: format!("{}", -height / 2.0),
+                    width: format!("{}", width),
+                    height: format!("{}", height),
+                    rx: "12",
+                    ry: "12",
+                    fill: "lightblue",
+                    stroke: "black",
+                    "stroke-width": "1.5",
+                }
             }
             text {
                 x: "0",
@@ -59,13 +82,6 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                 "text-anchor": "middle",
                 "font-size": "{font_size}",
                 "{node.text}"
-            }
-            if let Some((target_id, location)) = drop_target {
-                if target_id == id {
-                    g { transform: format!("translate({},{})", width / 2.0 + 8.0, -8),
-                        LocationIndicator { location }
-                    }
-                }
             }
         }
     }
