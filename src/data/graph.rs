@@ -17,7 +17,7 @@ impl Graph {
         }
     }
 
-    pub fn add_node(&mut self, x: f32, y: f32) {
+    pub fn add_node(&mut self, x: f32, y: f32) -> Uuid {
         let mut nodes = self.nodes.write();
         let id = Uuid::new_v4();
         nodes.insert(
@@ -26,10 +26,11 @@ impl Graph {
                 id,
                 x,
                 y,
-                text: format!("Node {}", id),
+                text: "".to_string(),
                 parent_id: None,
             },
         );
+        id
     }
 
     pub fn move_node(&mut self, id: Uuid, x: f32, y: f32) {

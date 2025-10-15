@@ -19,13 +19,23 @@ pub struct Node {
     pub parent_id: Option<Uuid>,
 }
 
+const TEXT_PADDING: f32 = 10.0;
+
 impl Node {
     pub fn width(&self) -> f32 {
-        (self.text.len() as f32 * FONT_SIZE * 0.6 + 20.0).max(80.0)
+        (self.text.lines().fold(0, |acc, line| acc.max(line.len())) as f32 * FONT_SIZE * 0.6)
+            .max(80.0)
+            + TEXT_PADDING * 2.0
     }
 
     pub fn height(&self) -> f32 {
-        (FONT_SIZE + 12.0).max(36.0)
+        let lines = if self.text.ends_with("\n") || self.text.ends_with("\n\r") {
+            self.text.lines().count() + 1
+        } else {
+            self.text.lines().count()
+        }
+        .max(1);
+        FONT_SIZE * lines as f32 + FONT_SIZE * 0.2 * (lines as f32 - 1.0) + TEXT_PADDING * 2.0
     }
 
     pub fn font_size(&self) -> f32 {

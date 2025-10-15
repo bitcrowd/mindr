@@ -32,11 +32,11 @@ pub fn Mindmap() -> Element {
 
         if Some(node.id) == *pane.dragging.read() {
             dragging_node = rsx! {
-                Node { id: node.id, store: store.clone() }
+                Node { id: node.id, store: store.clone(), key: node.id }
             };
         } else {
             nodes.push(rsx! {
-                Node { id: node.id, store: store.clone() }
+                Node { id: node.id, store: store.clone(), key: node.id }
             });
         }
     }
@@ -95,32 +95,31 @@ pub fn Mindmap() -> Element {
                     pane.transform.write().pan_y += coords.y as f32 - start_y;
                     pane.pan_offset.set((coords.x as f32, coords.y as f32));
                 }
+
             },
             onmousedown: move |evt| {
                 let coords = evt.element_coordinates();
-                if None == *pane.editing.read() {
-                    let (x, y) = pane.transform(coords.x as f32, coords.y as f32);
-                    if let Some(node) = graph.on(x, y) {
-                        pane.dragging.set(Some(node.id));
-                        let ox = x - node.x;
-                        let oy = y - node.y;
-                        pane.drag_offset.set((ox, oy));
-                    } else {
-                        pane.panning.set(true);
-                        pane.pan_offset.set((coords.x as f32, coords.y as f32));
-                    }
+                let (x, y) = pane.transform(coords.x as f32, coords.y as f32);
+                if let Some(node) = graph.on(x, y) {
+                    pane.dragging.set(Some(node.id));
+                    let ox = x - node.x;
+                    let oy = y - node.y;
+                    pane.drag_offset.set((ox, oy));
                 } else {
-                    pane.editing.set(None)
+                    pane.panning.set(true);
+                    pane.pan_offset.set((coords.x as f32, coords.y as f32));
+                    pane.editing.set(None);
                 }
+                evt.prevent_default();
             },
             ondoubleclick: move |evt| {
                 let coords = evt.element_coordinates();
                 let (x, y) = pane.transform(coords.x as f32, coords.y as f32);
-                dbg!(graph.on(x, y));
                 if let Some(node) = graph.on(x, y) {
                     pane.editing.set(Some(node.id));
                 } else {
-                    graph.add_node(x, y)
+                    let node_id = graph.add_node(x, y);
+                    pane.editing.set(Some(node_id));
                 }
             },
             g { transform: format!("translate({},{}) scale({})", t.pan_x, t.pan_y, t.scale),
