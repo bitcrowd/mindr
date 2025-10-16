@@ -65,12 +65,15 @@ pub fn Mindmap() -> Element {
                 }
                 pane.dragging.set(None);
                 pane.drop_target.set(None);
+                graph.layout_all();
             },
             onmouseleave: move |_| {
                 pane.dragging.set(None);
                 pane.minimap_dragging.set(false);
                 pane.panning.set(false);
-                pane.drop_target.set(None)
+                pane.drop_target.set(None);
+                                graph.layout_all();
+
             },
             onmousemove: move |evt| {
                 let coords = evt.element_coordinates();
