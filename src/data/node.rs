@@ -17,6 +17,7 @@ pub struct Node {
     pub y: f32,
     pub text: String,
     pub parent_id: Option<Uuid>,
+    pub color: &'static str,
 }
 
 const TEXT_PADDING: f32 = 10.0;

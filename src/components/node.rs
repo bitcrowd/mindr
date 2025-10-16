@@ -46,7 +46,7 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                     height: format!("{}", height),
                     rx: "20",
                     ry: "20",
-                    fill: "lightblue",
+                    fill: "{node.color}",
                     stroke: "black",
                     "stroke-width": "2",
                 }
@@ -58,7 +58,7 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                     height: format!("{}", height),
                     rx: "12",
                     ry: "12",
-                    fill: "lightblue",
+                    fill: "{node.color}",
                     stroke: "black",
                     "stroke-width": "1.5",
                 }

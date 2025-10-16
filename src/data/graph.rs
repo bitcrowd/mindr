@@ -5,8 +5,12 @@ use uuid::Uuid;
 
 use super::RelativeLocation;
 
-const SPACING_X: f32 = 200.0; // horizontal gap between parent and child
-const SPACING_Y: f32 = 20.0; // vertical gap between siblings
+const SPACING_X: f32 = 50.0; // horizontal gap between parent and child
+const SPACING_Y: f32 = 10.0; // vertical gap between siblings
+
+const COLORS: [&'static str; 8] = [
+    "#ffc6ff", "#ffadad", "#ffd6a5", "#fdffb6", "#caffbf", "#9bf6ff", "#a0c4ff", "#bdb2ff",
+];
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Graph {
@@ -31,6 +35,7 @@ impl Graph {
                 y,
                 text: "".to_string(),
                 parent_id: None,
+                color: COLORS.last().unwrap(),
             },
         );
         id
@@ -113,6 +118,24 @@ impl Graph {
 
         for root_id in root_ids {
             self.layout_subtree(root_id);
+            self.colorize(root_id);
+        }
+    }
+
+    fn colorize_with(&mut self, node_id: Uuid, color: &'static str) {
+        for child_id in self.direct_children(node_id) {
+            self.colorize_with(child_id, color);
+        }
+        let mut nodes = self.nodes.write();
+        if let Some(node) = nodes.get_mut(&node_id) {
+            node.color = color;
+        }
+    }
+
+    fn colorize(&mut self, root_id: Uuid) {
+        for (i, child_id) in self.direct_children(root_id).iter().enumerate() {
+            let color = COLORS[i % COLORS.len()];
+            self.colorize_with(*child_id, color);
         }
     }
 
