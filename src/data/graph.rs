@@ -1,5 +1,6 @@
 use crate::data::Node;
 use dioxus::prelude::*;
+use indexmap::IndexMap;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -14,13 +15,13 @@ const COLORS: [&'static str; 8] = [
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Graph {
-    pub nodes: Signal<HashMap<Uuid, Node>>,
+    pub nodes: Signal<IndexMap<Uuid, Node>>,
 }
 
 impl Graph {
     pub fn new() -> Self {
         Self {
-            nodes: use_signal(|| HashMap::new()),
+            nodes: use_signal(|| IndexMap::new()),
         }
     }
 
@@ -38,6 +39,53 @@ impl Graph {
                 color: COLORS.last().unwrap(),
             },
         );
+        id
+    }
+
+    pub fn add_child(&mut self, parent_id: Uuid, dir: f32) -> Uuid {
+        let parent = self.get_node(parent_id).unwrap();
+        let id = Uuid::new_v4();
+        {
+            let mut nodes = self.nodes.write();
+            nodes.insert(
+                id,
+                Node {
+                    id,
+                    x: parent.x + dir,
+                    y: parent.y,
+                    text: "".to_string(),
+                    parent_id: Some(parent_id),
+                    color: parent.color,
+                },
+            );
+        }
+        self.layout_all();
+        id
+    }
+
+    pub fn add_sibling(&mut self, node_id: Uuid) -> Uuid {
+        let node = self.get_node(node_id).unwrap();
+        let y = if node.parent_id == None {
+            node.y + 10.0 * SPACING_Y
+        } else {
+            node.y
+        };
+        let id = Uuid::new_v4();
+        {
+            let mut nodes = self.nodes.write();
+            nodes.insert(
+                id,
+                Node {
+                    id,
+                    x: node.x,
+                    y: y,
+                    text: "".to_string(),
+                    parent_id: node.parent_id,
+                    color: node.color,
+                },
+            );
+        }
+        self.layout_all();
         id
     }
 

@@ -44,6 +44,7 @@ pub fn Mindmap() -> Element {
         svg {
             width: "100%",
             style: "height: calc(100vh - 2em); background:#fafafa;cursor:grab; user-select: none; z-index: 999",
+            tabindex: "0",
             onresize: move |evt| {
                 match evt.data.get_border_box_size() {
                     Ok(sz) => {
@@ -72,8 +73,7 @@ pub fn Mindmap() -> Element {
                 pane.minimap_dragging.set(false);
                 pane.panning.set(false);
                 pane.drop_target.set(None);
-                                graph.layout_all();
-
+                graph.layout_all();
             },
             onmousemove: move |evt| {
                 let coords = evt.element_coordinates();
@@ -98,7 +98,6 @@ pub fn Mindmap() -> Element {
                     pane.transform.write().pan_y += coords.y as f32 - start_y;
                     pane.pan_offset.set((coords.x as f32, coords.y as f32));
                 }
-
             },
             onmousedown: move |evt| {
                 let coords = evt.element_coordinates();
@@ -125,6 +124,28 @@ pub fn Mindmap() -> Element {
                     pane.editing.set(Some(node_id));
                 }
             },
+            onkeydown: move |evt| {
+                let editing = *store.pane.editing.read();
+                match evt.key() {
+                    Key::Enter => {
+                        if !evt.modifiers().shift() {
+                            if let Some(id) = editing {
+                                let id = graph.add_sibling(id);
+                                pane.editing.set(Some(id));
+                            }
+                        }
+                    }
+                    Key::Tab => {
+                        if let Some(id) = editing {
+                          let dir = if evt.modifiers().shift() { -1.0 } else { 1.0 };
+                            let id = graph.add_child(id, dir);
+                            pane.editing.set(Some(id));
+                        }
+                    }
+                    _ => {}
+                }
+            },
+
             g { transform: format!("translate({},{}) scale({})", t.pan_x, t.pan_y, t.scale),
                 for link in links {
                     {link}

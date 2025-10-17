@@ -82,7 +82,7 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                 style: "user-select: none;",
                 textarea {
 
-                    style: if store.pane.dragging.read().is_some() { "pointer-events: none;" } else { "" } ,
+                    style: if store.pane.dragging.read().is_some() { "pointer-events: none;" } else { "" },
                     key: "{id}-textarea",
                     onmounted: move |element| input_element.set(Some(element.data())),
                     value: "{node.text}",
@@ -90,21 +90,11 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                     autocomplete: "off",
                     autocapitalize: "off",
                     spellcheck: "false",
+                    tabindex: "-1",
                     style: "user-select: none; padding-top: 7px; padding-bottom: 10px; width: 100%; height: 100%; outline:none; background: transparent; border: none; resize:none; overflow:hidden; text-align: center; font-size: {font_size}px; display: block",
                     oninput: move |evt| {
                         store.graph.update_node_text(id, evt.value().clone());
                         store.graph.layout_all();
-                    },
-                    onkeypress: move |evt| {
-                        if evt.key() == Key::Enter {
-                            if !evt.modifiers().shift() {
-                                store.pane.editing.set(None);
-                                evt.prevent_default();
-                                if let Some(input) = &*input_element.read() {
-                                    let _ = input.set_focus(false);
-                                }
-                            }
-                        }
                     },
                 }
             }
