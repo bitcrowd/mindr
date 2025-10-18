@@ -21,8 +21,20 @@ pub struct Node {
 }
 
 const TEXT_PADDING: f32 = 10.0;
-
+const DEFAULT_COLOR: &'static str = "#bdb2ff";
 impl Node {
+    pub fn new(x: f32, y: f32, parent_id: Option<Uuid>) -> Self {
+        let id = Uuid::new_v4();
+        Self {
+            id,
+            x,
+            y,
+            text: "".to_string(),
+            parent_id,
+            color: DEFAULT_COLOR,
+        }
+    }
+
     pub fn width(&self) -> f32 {
         (self.text.lines().fold(0, |acc, line| acc.max(line.len())) as f32 * FONT_SIZE * 0.6)
             .max(80.0)

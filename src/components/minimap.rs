@@ -43,6 +43,19 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
 
     let mini_to_world =
         move |dx: f32, dy: f32| -> (f32, f32) { (dx / scale * t.scale, dy / scale * t.scale) };
+    let mut nodes = Vec::new();
+    store.graph.for_each_node(|node| {
+        nodes.push(rsx! {
+            rect {
+                x: "{(node.x - min_x) * scale + MINIMAP_MARGIN}",
+                y: "{(node.y - min_y) * scale + MINIMAP_MARGIN}",
+                width: "{node.width() * scale}",
+                height: "{node.height() * scale}",
+                fill: {node.color},
+            }
+        });
+    });
+
     rsx! {
         g {
             transform: "translate({g_translate_x},{g_translate_y})",
@@ -84,16 +97,8 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
 
                 "stroke-width": "1.0",
             }
-
-            for node in store.graph.nodes.read().values() {
-                rect {
-                    x: "{(node.x - min_x) * scale + MINIMAP_MARGIN}",
-                    y: "{(node.y - min_y) * scale + MINIMAP_MARGIN}",
-                    width: "{node.width() * scale}",
-                    height: "{node.height() * scale}",
-                    fill: "lightblue",
-                    stroke: "black",
-                }
+            for node in nodes {
+              {node}
             }
 
             // Viewport rectangle

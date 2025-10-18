@@ -15,7 +15,7 @@ const COLORS: [&'static str; 8] = [
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Graph {
-    pub nodes: Signal<IndexMap<Uuid, Node>>,
+    nodes: Signal<IndexMap<Uuid, Node>>,
 }
 
 impl Graph {
@@ -27,37 +27,19 @@ impl Graph {
 
     pub fn add_node(&mut self, x: f32, y: f32) -> Uuid {
         let mut nodes = self.nodes.write();
-        let id = Uuid::new_v4();
-        nodes.insert(
-            id,
-            Node {
-                id,
-                x,
-                y,
-                text: "".to_string(),
-                parent_id: None,
-                color: COLORS.last().unwrap(),
-            },
-        );
+        let node = Node::new(x, y, None);
+        let id = node.id;
+        nodes.insert(id, node);
         id
     }
 
     pub fn add_child(&mut self, parent_id: Uuid, dir: f32) -> Uuid {
         let parent = self.get_node(parent_id).unwrap();
-        let id = Uuid::new_v4();
+        let node = Node::new(parent.x + dir, parent.y, Some(parent_id));
+        let id = node.id;
         {
             let mut nodes = self.nodes.write();
-            nodes.insert(
-                id,
-                Node {
-                    id,
-                    x: parent.x + dir,
-                    y: parent.y,
-                    text: "".to_string(),
-                    parent_id: Some(parent_id),
-                    color: parent.color,
-                },
-            );
+            nodes.insert(id, node);
         }
         self.layout_all();
         id
@@ -70,20 +52,11 @@ impl Graph {
         } else {
             node.y
         };
-        let id = Uuid::new_v4();
+        let sibling = Node::new(node.x, y, node.parent_id);
+        let id = sibling.id;
         {
             let mut nodes = self.nodes.write();
-            nodes.insert(
-                id,
-                Node {
-                    id,
-                    x: node.x,
-                    y: y,
-                    text: "".to_string(),
-                    parent_id: node.parent_id,
-                    color: node.color,
-                },
-            );
+            nodes.insert(id, sibling);
         }
         self.layout_all();
         id
@@ -220,6 +193,15 @@ impl Graph {
             .filter(|n| n.parent_id == Some(node_id))
             .map(|n| n.id)
             .collect()
+    }
+
+    pub fn for_each_node<F>(&self, mut f: F)
+    where
+        F: FnMut(&Node),
+    {
+        for node in self.nodes.read().values() {
+            f(node);
+        }
     }
 
     fn spread_children_vertically(

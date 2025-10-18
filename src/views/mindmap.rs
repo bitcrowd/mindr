@@ -22,11 +22,11 @@ pub fn Mindmap() -> Element {
     let mut links = Vec::new();
     let mut nodes = Vec::new();
     let mut dragging_node = rsx! {};
-    for node in graph.nodes.read().values() {
+    graph.for_each_node(|node| {
         // Links first
         if let Some(parent_id) = node.parent_id {
             links.push(rsx! {
-                NodeLink { id: node.id, parent_id, store: store.clone() }
+                NodeLink { id: node.id, parent_id, graph: graph.clone() }
             });
         }
 
@@ -39,7 +39,7 @@ pub fn Mindmap() -> Element {
                 Node { id: node.id, store: store.clone(), key: node.id }
             });
         }
-    }
+    });
     rsx! {
         svg {
             width: "100%",
@@ -83,13 +83,14 @@ pub fn Mindmap() -> Element {
                     let (x, y) = (mx - ox, my - oy);
                     graph.move_node(node_id, x, y);
                     let mut drop_target = None;
-                    for node in graph.nodes.read().values() {
-                        if let Some(location) = node.on(x, y) {
-                            if node.id != node_id {
-                                drop_target = Some((node.id, location));
+                    graph
+                        .for_each_node(|node| {
+                            if let Some(location) = node.on(x, y) {
+                                if node.id != node_id {
+                                    drop_target = Some((node.id, location));
+                                }
                             }
-                        }
-                    }
+                        });
                     pane.drop_target.set(drop_target);
                 }
                 if *pane.panning.read() {
@@ -137,7 +138,7 @@ pub fn Mindmap() -> Element {
                     }
                     Key::Tab => {
                         if let Some(id) = editing {
-                          let dir = if evt.modifiers().shift() { -1.0 } else { 1.0 };
+                            let dir = if evt.modifiers().shift() { -1.0 } else { 1.0 };
                             let id = graph.add_child(id, dir);
                             pane.editing.set(Some(id));
                         }
@@ -164,6 +165,7 @@ pub fn Mindmap() -> Element {
             }
 
             MiniMap { store: store.clone(), svg_size: size.clone() }
+        
         }
     }
 }

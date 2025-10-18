@@ -1,15 +1,13 @@
-use crate::data::Store;
+use crate::data::Graph;
 use dioxus::prelude::*;
 use uuid::Uuid;
 
 #[component]
-pub fn NodeLink(id: Uuid, parent_id: Uuid, store: Store) -> Element {
-    let nodes = store.graph.nodes.read();
-
-    let Some(parent) = nodes.get(&parent_id) else {
+pub fn NodeLink(id: Uuid, parent_id: Uuid, graph: Graph) -> Element {
+    let Some(parent) = graph.get_node(parent_id) else {
         return rsx! {};
     };
-    let Some(child) = nodes.get(&id) else {
+    let Some(child) = graph.get_node(id) else {
         return rsx! {};
     };
 
