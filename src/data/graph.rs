@@ -71,10 +71,14 @@ impl Graph {
     }
 
     pub fn update_node_text(&mut self, id: Uuid, new_text: String) {
-        let mut nodes = self.nodes.write();
-        if let Some(node) = nodes.get_mut(&id) {
-            node.text = new_text;
+        {
+            let mut nodes = self.nodes.write();
+            if let Some(node) = nodes.get_mut(&id) {
+                node.text = new_text;
+            }
         }
+
+        self.layout_all();
     }
 
     pub fn move_node_into(&mut self, id: Uuid, target: (Uuid, RelativeLocation)) {
@@ -126,6 +130,15 @@ impl Graph {
                 )
             },
         )
+    }
+
+    pub fn for_each_node<F>(&self, mut f: F)
+    where
+        F: FnMut(&Node),
+    {
+        for node in self.nodes.read().values() {
+            f(node);
+        }
     }
 
     pub fn layout_all(&mut self) {
@@ -193,15 +206,6 @@ impl Graph {
             .filter(|n| n.parent_id == Some(node_id))
             .map(|n| n.id)
             .collect()
-    }
-
-    pub fn for_each_node<F>(&self, mut f: F)
-    where
-        F: FnMut(&Node),
-    {
-        for node in self.nodes.read().values() {
-            f(node);
-        }
     }
 
     fn spread_children_vertically(

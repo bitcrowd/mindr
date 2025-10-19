@@ -94,7 +94,6 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                     style: "user-select: none; padding-top: 7px; padding-bottom: 10px; width: 100%; height: 100%; outline:none; background: transparent; border: none; resize:none; overflow:hidden; text-align: center; font-size: {font_size}px; display: block",
                     oninput: move |evt| {
                         store.graph.update_node_text(id, evt.value().clone());
-                        store.graph.layout_all();
                     },
                 }
             }

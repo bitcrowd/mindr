@@ -51,7 +51,7 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
                 y: "{(node.y - min_y) * scale + MINIMAP_MARGIN}",
                 width: "{node.width() * scale}",
                 height: "{node.height() * scale}",
-                fill: {node.color},
+                fill: node.color,
             }
         });
     });
