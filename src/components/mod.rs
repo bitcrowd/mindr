@@ -4,6 +4,7 @@
 
 mod node;
 pub use node::Node;
+pub use node::RawNode;
 
 mod node_link;
 pub use node_link::NodeLink;

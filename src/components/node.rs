@@ -4,6 +4,63 @@ use std::rc::Rc;
 use uuid::Uuid;
 
 #[component]
+fn RawChildNode(width: f32, height: f32, color: &'static str) -> Element {
+    rsx! {
+        rect {
+            x: format!("{}", -width / 2.0),
+            y: format!("{}", -height / 2.0),
+            width: format!("{}", width),
+            height: format!("{}", height),
+            rx: "12",
+            ry: "12",
+            fill: "{color}",
+            stroke: "black",
+            "stroke-width": "1.5",
+        }
+    }
+}
+
+#[component]
+fn RawRootNode(width: f32, height: f32, color: &'static str) -> Element {
+    rsx! {
+        rect {
+            x: format!("{}", -width / 2.0),
+            y: format!("{}", -height / 2.0),
+            width: format!("{}", width + 4.0),
+            height: format!("{}", height + 4.0),
+            rx: "20",
+            ry: "20",
+            fill: "rgba(0,0,0,0.3)",
+        }
+
+        rect {
+            x: format!("{}", -width / 2.0),
+            y: format!("{}", -height / 2.0),
+            width: format!("{}", width),
+            height: format!("{}", height),
+            rx: "20",
+            ry: "20",
+            fill: "{color}",
+            stroke: "black",
+            "stroke-width": "2",
+        }
+    }
+}
+
+#[component]
+pub fn RawNode(node: crate::data::Node) -> Element {
+    let width = node.width();
+    let height = node.height();
+    rsx! {
+        if node.parent_id == None {
+            RawRootNode { width, height, color: node.color }
+        } else {
+            RawChildNode { width, height, color: node.color }
+        }
+    }
+}
+
+#[component]
 pub fn Node(id: Uuid, store: Store) -> Element {
     let node = store.graph.get_node(id).unwrap();
     let width = node.width();
@@ -14,6 +71,7 @@ pub fn Node(id: Uuid, store: Store) -> Element {
     if let Some(input) = &*input_element.read() {
         let _ = input.set_focus(is_editing);
     }
+
     rsx! {
         g {
             transform: format!("translate({},{})", node.x, node.y),
@@ -28,42 +86,8 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                 }
             },
             style: if is_editing { "" } else { "pointer-events: none;" },
-            if None == node.parent_id {
-                rect {
-                    x: format!("{}", -width / 2.0),
-                    y: format!("{}", -height / 2.0),
-                    width: format!("{}", width + 4.0),
-                    height: format!("{}", height + 4.0),
-                    rx: "20",
-                    ry: "20",
-                    fill: "rgba(0,0,0,0.3)",
-                }
-
-                rect {
-                    x: format!("{}", -width / 2.0),
-                    y: format!("{}", -height / 2.0),
-                    width: format!("{}", width),
-                    height: format!("{}", height),
-                    rx: "20",
-                    ry: "20",
-                    fill: "{node.color}",
-                    stroke: "black",
-                    "stroke-width": "2",
-                }
-            } else {
-                rect {
-                    x: format!("{}", -width / 2.0),
-                    y: format!("{}", -height / 2.0),
-                    width: format!("{}", width),
-                    height: format!("{}", height),
-                    rx: "12",
-                    ry: "12",
-                    fill: "{node.color}",
-                    stroke: "black",
-                    "stroke-width": "1.5",
-                }
-            }
-
+            opacity: if store.pane.is_dragging(id) { 0.3 } else { 1.0 },
+            RawNode { node: node.clone() }
 
             if *store.pane.editing.read() == Some(id) {
                 circle {
@@ -81,8 +105,7 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                 height: format!("{}", height),
                 style: "user-select: none;",
                 textarea {
-
-                    style: if store.pane.dragging.read().is_some() { "pointer-events: none;" } else { "" },
+                    style: if store.pane.dragging_node.read().is_some() { "pointer-events: none;" } else { "" },
                     key: "{id}-textarea",
                     onmounted: move |element| input_element.set(Some(element.data())),
                     value: "{node.text}",

@@ -55,7 +55,7 @@ impl Node {
         FONT_SIZE
     }
 
-    pub fn on(&self, x: f32, y: f32) -> Option<RelativeLocation> {
+    pub fn on(&self, (x, y): (f32, f32)) -> Option<RelativeLocation> {
         use RelativeLocation::*;
         let (w, h) = (self.width(), self.height());
         let (dx, dy) = (x - self.x, y - self.y);

@@ -25,7 +25,7 @@ impl Graph {
         }
     }
 
-    pub fn add_node(&mut self, x: f32, y: f32) -> Uuid {
+    pub fn add_node(&mut self, (x, y): (f32, f32)) -> Uuid {
         let mut nodes = self.nodes.write();
         let node = Node::new(x, y, None);
         let id = node.id;
@@ -62,14 +62,6 @@ impl Graph {
         id
     }
 
-    pub fn move_node(&mut self, id: Uuid, x: f32, y: f32) {
-        let mut nodes = self.nodes.write();
-        if let Some(node) = nodes.get_mut(&id) {
-            node.x = x;
-            node.y = y;
-        }
-    }
-
     pub fn update_node_text(&mut self, id: Uuid, new_text: String) {
         {
             let mut nodes = self.nodes.write();
@@ -81,25 +73,45 @@ impl Graph {
         self.layout_all();
     }
 
-    pub fn move_node_into(&mut self, id: Uuid, target: (Uuid, RelativeLocation)) {
-        let mut nodes = self.nodes.write();
-        let (target_id, _) = target;
-        if let Some(node) = nodes.get_mut(&id) {
-            node.parent_id = Some(target_id);
-        }
-
-        if let Some(node) = nodes.get_mut(&target_id) {
-            if node.parent_id == Some(id) {
-                node.parent_id = None;
+    pub fn move_node(&mut self, id: Uuid, (x, y): (f32, f32)) {
+        {
+            let mut nodes = self.nodes.write();
+            if let Some(node) = nodes.get_mut(&id) {
+                node.x = x;
+                node.y = y;
             }
         }
     }
 
-    pub fn on(&self, x: f32, y: f32) -> Option<Node> {
+    pub fn try_move_node(&mut self, id: Uuid, coords: (f32, f32)) {
+        if None == self.get_node(id).unwrap().parent_id {
+            self.move_node(id, coords);
+        }
+        self.layout_all();
+    }
+
+    pub fn move_node_into(&mut self, id: Uuid, target: (Uuid, RelativeLocation)) {
+        {
+            let mut nodes = self.nodes.write();
+            let (target_id, _) = target;
+            if let Some(node) = nodes.get_mut(&id) {
+                node.parent_id = Some(target_id);
+            }
+
+            if let Some(node) = nodes.get_mut(&target_id) {
+                if node.parent_id == Some(id) {
+                    node.parent_id = None;
+                }
+            }
+        }
+        self.layout_all();
+    }
+
+    pub fn on(&self, coords: (f32, f32)) -> Option<(Uuid, RelativeLocation)> {
         let mut target = None;
         for node in self.nodes.read().values() {
-            if let Some(_) = node.on(x, y) {
-                target = Some(node.clone())
+            if let Some(relative_location) = node.on(coords) {
+                target = Some((node.id, relative_location))
             }
         }
         target
@@ -231,7 +243,7 @@ impl Graph {
                 parent.x + direction * ((parent.width() + child.width()) / 2.0 + SPACING_X);
             let child_height = heights[&child_id];
             let target_y = y + child_height / 2.0;
-            self.move_node(child_id, child_x, target_y);
+            self.move_node(child_id, (child_x, target_y));
             y += child_height + SPACING_Y;
 
             let grandchildren = self.direct_children(child_id);

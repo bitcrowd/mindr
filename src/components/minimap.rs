@@ -98,7 +98,7 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
                 "stroke-width": "1.0",
             }
             for node in nodes {
-              {node}
+                {node}
             }
 
             // Viewport rectangle
