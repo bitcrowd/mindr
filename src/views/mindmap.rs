@@ -1,8 +1,9 @@
+use crate::components::DraggedNode;
 use crate::components::LocationIndicator;
 use crate::components::MiniMap;
 use crate::components::Node;
 use crate::components::NodeLink;
-use crate::components::RawNode;
+use crate::data::RelativeLocation;
 use crate::data::Store;
 use dioxus::prelude::*;
 
@@ -21,7 +22,7 @@ pub fn Mindmap() -> Element {
         // Links first
         if let Some(parent_id) = node.parent_id {
             links.push(rsx! {
-                NodeLink { id: node.id, parent_id, graph: graph.clone() }
+                NodeLink { id: node.id, parent_id, store: store.clone() }
             });
         }
 
@@ -48,11 +49,7 @@ pub fn Mindmap() -> Element {
                 pane.minimap_dragging.set(false);
                 pane.panning.set(false);
                 if let Some(dragging_node) = *pane.dragging_node.read() {
-                    if let Some(target) = dragging_node.target {
-                        graph.move_node_into(dragging_node.id, target);
-                    } else {
-                        graph.try_move_node(dragging_node.id, dragging_node.coords);
-                    }
+                        graph.move_node_into(dragging_node.id, dragging_node.coords, dragging_node.target);
                 }
                 pane.dragging_node.set(None);
             },
@@ -91,7 +88,7 @@ pub fn Mindmap() -> Element {
                 if let Some((node_id, _)) = graph.on(svg_coords) {
                     pane.editing.set(Some(node_id));
                 } else {
-                    let node_id = graph.add_node(svg_coords);
+                    let node_id = graph.add_root_node(svg_coords);
                     pane.editing.set(Some(node_id));
                 }
             },
@@ -108,7 +105,7 @@ pub fn Mindmap() -> Element {
                     }
                     Key::Tab => {
                         if let Some(id) = editing {
-                            let dir = if evt.modifiers().shift() { -1.0 } else { 1.0 };
+                            let dir = if evt.modifiers().shift() { RelativeLocation::Left } else { RelativeLocation::Right };
                             let id = graph.add_child(id, dir);
                             pane.editing.set(Some(id));
                         }
@@ -127,10 +124,8 @@ pub fn Mindmap() -> Element {
 
                 if let Some(dragging_node) = *pane.dragging_node.read() {
                     if let Some(node) = graph.get_node(dragging_node.id) {
-                        g { transform: format!("translate({},{})", dragging_node.coords.0, dragging_node.coords.1),
-                            RawNode { node }
-                        }
-                        if let Some((_, location)) = dragging_node.target {
+                      DraggedNode { id: node.id, coords: dragging_node.coords }
+                      if let Some((_, location)) = dragging_node.target {
                             g {
                                 transform: format!(
                                     "translate({},{})",

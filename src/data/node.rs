@@ -11,7 +11,7 @@ pub enum RelativeLocation {
 
 const FONT_SIZE: f32 = 14.0;
 #[derive(Clone, PartialEq, Debug)]
-pub struct Node {
+pub struct RenderedNode {
     pub id: Uuid,
     pub x: f32,
     pub y: f32,
@@ -22,9 +22,8 @@ pub struct Node {
 
 const TEXT_PADDING: f32 = 10.0;
 const DEFAULT_COLOR: &'static str = "#bdb2ff";
-impl Node {
-    pub fn new(x: f32, y: f32, parent_id: Option<Uuid>) -> Self {
-        let id = Uuid::new_v4();
+impl RenderedNode {
+    pub fn new(id: Uuid, (x, y): (f32, f32), parent_id: Option<Uuid>) -> Self {
         Self {
             id,
             x,

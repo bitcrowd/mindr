@@ -1,4 +1,3 @@
-use crate::Route;
 use dioxus::prelude::*;
 
 #[component]

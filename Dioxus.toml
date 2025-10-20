@@ -1,5 +1,11 @@
 [application]
 
+[web]
+features = ["web"]
+
+[desktop]
+features = ["desktop"]
+
 [web.app]
 
 # HTML title tag content
@@ -19,3 +25,4 @@ script = []
 # Javascript code file
 # serve: [dev-server] only
 script = []
+

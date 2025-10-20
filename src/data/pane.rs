@@ -1,8 +1,8 @@
 use dioxus::prelude::*;
 use uuid::Uuid;
 
-use crate::data::Node;
 use crate::data::RelativeLocation;
+use crate::data::RenderedNode;
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Transform {
@@ -52,7 +52,7 @@ impl Pane {
         (x - t.pan_x, y - t.pan_y)
     }
 
-    pub fn start_drag(&mut self, node: &Node, (x, y): (f32, f32)) {
+    pub fn start_drag(&mut self, node: &RenderedNode, (x, y): (f32, f32)) {
         let ox = x - node.x;
         let oy = y - node.y;
         self.dragging_node.set(Some(DraggingNode {

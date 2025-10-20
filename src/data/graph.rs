@@ -1,10 +1,10 @@
-use crate::data::Node;
+use crate::data::{CollabGraph, RelativeLocation, RenderedNode};
+use crate::data::{Node, NodeKind};
 use dioxus::prelude::*;
-use indexmap::IndexMap;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use super::RelativeLocation;
+use super::collab::Side;
 
 const SPACING_X: f32 = 50.0; // horizontal gap between parent and child
 const SPACING_Y: f32 = 10.0; // vertical gap between siblings
@@ -15,96 +15,124 @@ const COLORS: [&'static str; 8] = [
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Graph {
-    nodes: Signal<IndexMap<Uuid, Node>>,
+    nodes: Signal<HashMap<Uuid, RenderedNode>, SyncStorage>,
+    order: Signal<Vec<Uuid>, SyncStorage>,
+    doc: Signal<CollabGraph>,
+    subscription: Signal<Option<yrs::Subscription>>,
 }
 
 impl Graph {
     pub fn new() -> Self {
-        Self {
-            nodes: use_signal(|| IndexMap::new()),
-        }
+        let nodes = use_signal_sync(|| HashMap::new());
+        let order = use_signal_sync(|| Vec::new());
+        let doc = use_signal(|| CollabGraph::new());
+        let subscription = use_signal(|| None);
+
+        let mut graph = Self {
+            nodes,
+            order,
+            doc,
+            subscription,
+        };
+        graph.subscribe();
+        graph
     }
 
-    pub fn add_node(&mut self, (x, y): (f32, f32)) -> Uuid {
-        let mut nodes = self.nodes.write();
-        let node = Node::new(x, y, None);
-        let id = node.id;
-        nodes.insert(id, node);
-        id
+    fn subscribe(&mut self) {
+        let mut nodes = self.nodes.clone();
+        use_hook(|| {
+            let sub = self.doc.write().observe_nodes(move |id, node| {
+                let mut nodes = nodes.write();
+                if let Some(node) = node {
+                    let node = match node.kind {
+                        NodeKind::Root { coords } => RenderedNode::new(id, coords, None),
+                        NodeKind::Child { parent_id, side: _ } => {
+                            RenderedNode::new(id, (0f32, 0f32), Some(parent_id))
+                        }
+                    };
+                    nodes.insert(id, node);
+                } else {
+                    nodes.remove(&id);
+                }
+            });
+            self.subscription.set(Some(sub));
+            self.layout_all();
+        });
     }
 
-    pub fn add_child(&mut self, parent_id: Uuid, dir: f32) -> Uuid {
-        let parent = self.get_node(parent_id).unwrap();
-        let node = Node::new(parent.x + dir, parent.y, Some(parent_id));
-        let id = node.id;
-        {
-            let mut nodes = self.nodes.write();
-            nodes.insert(id, node);
-        }
-        self.layout_all();
-        id
+    pub fn add_root_node(&mut self, coords: (f32, f32)) -> Uuid {
+        let node = Node::new_root(coords);
+        self.doc.write().add_node(node)
+    }
+
+    pub fn add_child(&mut self, parent_id: Uuid, location: RelativeLocation) -> Uuid {
+        let side = match location {
+            RelativeLocation::Left => Side::Left,
+            _ => Side::Right,
+        };
+
+        let node = Node::new_child(parent_id, side);
+        self.doc.write().add_node(node)
     }
 
     pub fn add_sibling(&mut self, node_id: Uuid) -> Uuid {
-        let node = self.get_node(node_id).unwrap();
-        let y = if node.parent_id == None {
-            node.y + 10.0 * SPACING_Y
+        let sibling = self.get_node(node_id).unwrap();
+        let node = if let Some(parent_id) = sibling.parent_id {
+            let parent = self.get_node(parent_id).unwrap();
+            let side = if parent.x >= sibling.x {
+                Side::Left
+            } else {
+                Side::Right
+            };
+            Node::new_child(parent_id, side)
         } else {
-            node.y
+            Node::new_root((sibling.x, sibling.y + 10.0 * SPACING_Y))
         };
-        let sibling = Node::new(node.x, y, node.parent_id);
-        let id = sibling.id;
-        {
-            let mut nodes = self.nodes.write();
-            nodes.insert(id, sibling);
-        }
-        self.layout_all();
-        id
+        self.doc.write().add_node(node)
     }
 
     pub fn update_node_text(&mut self, id: Uuid, new_text: String) {
-        {
-            let mut nodes = self.nodes.write();
-            if let Some(node) = nodes.get_mut(&id) {
-                node.text = new_text;
-            }
-        }
-
-        self.layout_all();
+        self.doc.write().update_node_text(id, new_text)
     }
 
-    pub fn move_node(&mut self, id: Uuid, (x, y): (f32, f32)) {
-        {
-            let mut nodes = self.nodes.write();
-            if let Some(node) = nodes.get_mut(&id) {
-                node.x = x;
-                node.y = y;
-            }
-        }
-    }
-
-    pub fn try_move_node(&mut self, id: Uuid, coords: (f32, f32)) {
+    pub fn move_node(&mut self, id: Uuid, coords: (f32, f32)) {
         if None == self.get_node(id).unwrap().parent_id {
+            self.doc.write().update_node_coords(id, coords);
+        } else {
+            self.move_child_node(id, coords);
+            self.layout_all();
+        }
+    }
+
+    pub fn move_node_into(
+        &mut self,
+        id: Uuid,
+        coords: (f32, f32),
+        target: Option<(Uuid, RelativeLocation)>,
+    ) {
+        if let Some((target_id, location)) = target {
+            if self.get_root(target_id) == Some(id) {
+                self.move_node(id, coords);
+            } else {
+                let side = match location {
+                    RelativeLocation::Left => Side::Left,
+                    _ => Side::Right,
+                };
+                self.doc.write().update_node_parent(id, target_id, side);
+            }
+        } else {
             self.move_node(id, coords);
         }
-        self.layout_all();
     }
 
-    pub fn move_node_into(&mut self, id: Uuid, target: (Uuid, RelativeLocation)) {
-        {
-            let mut nodes = self.nodes.write();
-            let (target_id, _) = target;
-            if let Some(node) = nodes.get_mut(&id) {
-                node.parent_id = Some(target_id);
+    pub fn get_root(&self, id: Uuid) -> Option<Uuid> {
+        self.get_node(id).map(|n| {
+            if let Some(parent_id) = n.parent_id {
+                return self.get_root(parent_id).unwrap();
+            } else {
+                return id;
             }
-
-            if let Some(node) = nodes.get_mut(&target_id) {
-                if node.parent_id == Some(id) {
-                    node.parent_id = None;
-                }
-            }
-        }
-        self.layout_all();
+        })
     }
 
     pub fn on(&self, coords: (f32, f32)) -> Option<(Uuid, RelativeLocation)> {
@@ -117,7 +145,7 @@ impl Graph {
         target
     }
 
-    pub fn get_node(&self, id: Uuid) -> Option<Node> {
+    pub fn get_node(&self, id: Uuid) -> Option<RenderedNode> {
         self.nodes.read().get(&id).cloned()
     }
 
@@ -146,7 +174,7 @@ impl Graph {
 
     pub fn for_each_node<F>(&self, mut f: F)
     where
-        F: FnMut(&Node),
+        F: FnMut(&RenderedNode),
     {
         for node in self.nodes.read().values() {
             f(node);
@@ -172,8 +200,7 @@ impl Graph {
         for child_id in self.direct_children(node_id) {
             self.colorize_with(child_id, color);
         }
-        let mut nodes = self.nodes.write();
-        if let Some(node) = nodes.get_mut(&node_id) {
+        if let Some(node) = self.nodes.write().get_mut(&node_id) {
             node.color = color;
         }
     }
@@ -212,9 +239,9 @@ impl Graph {
     }
 
     fn direct_children(&self, node_id: Uuid) -> Vec<Uuid> {
-        self.nodes
-            .read()
-            .values()
+        self.order
+            .iter()
+            .map(|n| self.get_node(*n).unwrap())
             .filter(|n| n.parent_id == Some(node_id))
             .map(|n| n.id)
             .collect()
@@ -243,7 +270,7 @@ impl Graph {
                 parent.x + direction * ((parent.width() + child.width()) / 2.0 + SPACING_X);
             let child_height = heights[&child_id];
             let target_y = y + child_height / 2.0;
-            self.move_node(child_id, (child_x, target_y));
+            self.move_child_node(child_id, (child_x, target_y));
             y += child_height + SPACING_Y;
 
             let grandchildren = self.direct_children(child_id);
@@ -263,5 +290,12 @@ impl Graph {
 
         self.spread_children_vertically(root_id, &left, heights, -1.0);
         self.spread_children_vertically(root_id, &right, heights, 1.0);
+    }
+
+    fn move_child_node(&mut self, id: Uuid, (x, y): (f32, f32)) {
+        if let Some(node) = self.nodes.write().get_mut(&id) {
+            node.x = x;
+            node.y = y;
+        }
     }
 }

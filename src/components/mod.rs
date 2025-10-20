@@ -3,8 +3,8 @@
 //! component and an Echo component for fullstack apps to be used in our app.
 
 mod node;
+pub use node::DraggedNode;
 pub use node::Node;
-pub use node::RawNode;
 
 mod node_link;
 pub use node_link::NodeLink;
