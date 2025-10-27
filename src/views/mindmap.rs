@@ -49,7 +49,12 @@ pub fn Mindmap() -> Element {
                 pane.minimap_dragging.set(false);
                 pane.panning.set(false);
                 if let Some(dragging_node) = *pane.dragging_node.read() {
-                        graph.move_node_into(dragging_node.id, dragging_node.coords, dragging_node.target);
+                    graph
+                        .move_node_into(
+                            dragging_node.id,
+                            dragging_node.coords,
+                            dragging_node.target,
+                        );
                 }
                 pane.dragging_node.set(None);
             },
@@ -73,8 +78,9 @@ pub fn Mindmap() -> Element {
                 let coords = evt.element_coordinates();
                 let svg_coords = pane.transform(coords.x as f32, coords.y as f32);
                 if let Some((target_id, _)) = graph.on(svg_coords) {
-                    let node = graph.get_node(target_id).unwrap();
-                    pane.start_drag(&node, svg_coords);
+                    if let Some(node) = graph.get_node(target_id) {
+                        pane.start_drag(&node, svg_coords);
+                    }
                 } else {
                     pane.panning.set(true);
                     pane.pan_offset.set((coords.x as f32, coords.y as f32));
@@ -106,7 +112,11 @@ pub fn Mindmap() -> Element {
                     }
                     Key::Tab => {
                         if let Some(id) = editing {
-                            let dir = if evt.modifiers().shift() { RelativeLocation::Left } else { RelativeLocation::Right };
+                            let dir = if evt.modifiers().shift() {
+                                RelativeLocation::Left
+                            } else {
+                                RelativeLocation::Right
+                            };
                             let id = graph.add_child(id, dir);
                             pane.editing.set(Some(id));
                         }
@@ -125,8 +135,8 @@ pub fn Mindmap() -> Element {
 
                 if let Some(dragging_node) = *pane.dragging_node.read() {
                     if let Some(node) = graph.get_node(dragging_node.id) {
-                      DraggedNode { id: node.id, coords: dragging_node.coords }
-                      if let Some((_, location)) = dragging_node.target {
+                        DraggedNode { id: node.id, coords: dragging_node.coords }
+                        if let Some((_, location)) = dragging_node.target {
                             g {
                                 transform: format!(
                                     "translate({},{})",

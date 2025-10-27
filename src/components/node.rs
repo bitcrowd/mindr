@@ -21,11 +21,14 @@ pub fn DraggedNode(id: Uuid, coords: (f32, f32)) -> Element {
     });
 
     rsx! {
-        g {
-            transform: format!("translate({}, {})", coords.0, coords.1),
-            use {
+        g { transform: format!("translate({}, {})", coords.0, coords.1),
+            r#use {
                 href: format!("#{id}"),
-                style: format!("transform: scale({}); opacity: {};", scale.get_value(), opacity.get_value()),
+                style: format!(
+                    "transform: scale({}); opacity: {};",
+                    scale.get_value(),
+                    opacity.get_value(),
+                ),
             }
         }
     }
@@ -101,54 +104,53 @@ pub fn Node(id: Uuid, store: Store) -> Element {
     }
 
     rsx! {
-        g {
-            transform: format!("translate({},{})", node.x, node.y),
+        g { transform: format!("translate({},{})", node.x, node.y),
             g {
-              onmousedown: move |evt| {
-                  if is_editing {
-                      evt.stop_propagation();
-                  }
-              },
-              ondoubleclick: move |evt| {
-                  if is_editing {
-                      evt.stop_propagation();
-                  }
-              },
-              style: if is_editing { "" } else { "pointer-events: none;" },
-              id:  "{node.id}",
-              RawNode { node: node.clone() }
+                onmousedown: move |evt| {
+                    if is_editing {
+                        evt.stop_propagation();
+                    }
+                },
+                ondoubleclick: move |evt| {
+                    if is_editing {
+                        evt.stop_propagation();
+                    }
+                },
+                style: if is_editing { "" } else { "pointer-events: none;" },
+                id: "{node.id}",
+                RawNode { node: node.clone() }
 
-              if *store.pane.editing.read() == Some(id) {
-                  circle {
-                      cx: format!("{}", width / 2.0),
-                      cy: format!("{}", height / 2.0),
-                      r: "10",
-                      fill: "red",
-                      stroke: "black",
-                  }
-              }
-              foreignObject {
-                  x: format!("{}", -width / 2.0),
-                  y: format!("{}", -height / 2.0),
-                  width: format!("{}", width),
-                  height: format!("{}", height),
-                  style: "user-select: none;",
-                  textarea {
-                      style: if store.pane.dragging_node.read().is_some() { "pointer-events: none;" } else { "" },
-                      key: "{id}-textarea",
-                      onmounted: move |element| input_element.set(Some(element.data())),
-                      value: "{node.text}",
-                      autofocus: "true",
-                      autocomplete: "off",
-                      autocapitalize: "off",
-                      spellcheck: "false",
-                      tabindex: "-1",
-                      style: "user-select: none; padding-top: 7px; padding-bottom: 10px; width: 100%; height: 100%; outline:none; background: transparent; border: none; resize:none; overflow:hidden; text-align: center; font-size: {font_size}px; display: block",
-                      oninput: move |evt| {
-                          store.graph.update_node_text(id, evt.value().clone());
-                      },
-                  }
-              }
+                if *store.pane.editing.read() == Some(id) {
+                    circle {
+                        cx: format!("{}", width / 2.0),
+                        cy: format!("{}", height / 2.0),
+                        r: "10",
+                        fill: "red",
+                        stroke: "black",
+                    }
+                }
+                foreignObject {
+                    x: format!("{}", -width / 2.0),
+                    y: format!("{}", -height / 2.0),
+                    width: format!("{}", width),
+                    height: format!("{}", height),
+                    style: "user-select: none;",
+                    textarea {
+                        style: if store.pane.dragging_node.read().is_some() { "pointer-events: none;" } else { "" },
+                        key: "{id}-textarea",
+                        onmounted: move |element| input_element.set(Some(element.data())),
+                        value: "{node.text}",
+                        autofocus: "true",
+                        autocomplete: "off",
+                        autocapitalize: "off",
+                        spellcheck: "false",
+                        tabindex: "-1",
+                        style: "user-select: none; padding-top: 7px; padding-bottom: 10px; width: 100%; height: 100%; outline:none; background: transparent; border: none; resize:none; overflow:hidden; text-align: center; font-size: {font_size}px; display: block",
+                        oninput: move |evt| {
+                            store.graph.update_node_text(id, evt.value().clone());
+                        },
+                    }
+                }
             }
         }
     }
