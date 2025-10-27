@@ -1,7 +1,8 @@
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 use yrs::{
-    types::EntryChange, Any, Array, ArrayRef, Doc, Map, MapPrelim, MapRef, Observable, Out,
+    types::{EntryChange, Event, PathSegment},
+    Any, Array, ArrayRef, DeepObservable, Doc, Map, MapPrelim, MapRef, Observable, Out,
     Subscription, Transact, TransactionMut,
 };
 
@@ -161,18 +162,36 @@ impl CollabGraph {
     where
         F: FnMut(Uuid, Option<Node>) + Send + Sync + 'static,
     {
-        let callback = Arc::new(Mutex::new(callback));
-        self.y_nodes.observe(move |txn, event| {
-            for (key, event) in event.keys(txn) {
-                let id = Uuid::parse_str(key).expect("Expected Node ID");
-                let node = match event {
-                    EntryChange::Inserted(Out::YMap(node)) => Some(Node::from_txn(txn, node)),
-                    EntryChange::Updated(_, Out::YMap(node)) => Some(Node::from_txn(txn, node)),
-                    EntryChange::Removed(_) => None,
-                    _ => None,
-                };
-                if let Ok(mut f) = callback.lock() {
-                    (f)(id, node);
+        let cb = Arc::new(Mutex::new(callback));
+        self.y_nodes.observe_deep(move |txn, events| {
+            for event in events.iter() {
+                if let Event::Map(map_event) = event {
+                    let path = map_event.path();
+                    if path.is_empty() {
+                        for (key, change) in map_event.keys(txn) {
+                            let id = Uuid::parse_str(key).expect("Expected Node ID");
+                            let node = match change {
+                                EntryChange::Inserted(Out::YMap(node)) => {
+                                    Some(Node::from_txn(txn, node))
+                                }
+                                EntryChange::Updated(_, Out::YMap(node)) => {
+                                    Some(Node::from_txn(txn, node))
+                                }
+                                EntryChange::Removed(_) => None,
+                                _ => None,
+                            };
+                            if let Ok(mut f) = cb.lock() {
+                                (f)(id, node);
+                            }
+                        }
+                    } else {
+                        if let PathSegment::Key(key) = &path[0] {
+                            let id = Uuid::parse_str(key).expect("Expected Node ID");
+                            if let Ok(mut f) = cb.lock() {
+                                (f)(id, Some(Node::from_txn(txn, map_event.target())));
+                            }
+                        }
+                    }
                 }
             }
         })
@@ -180,11 +199,22 @@ impl CollabGraph {
 
     pub fn observe_order<F>(&mut self, callback: F) -> Subscription
     where
-        F: FnMut(Uuid, Option<Node>) + Send + Sync + 'static,
+        F: FnMut(Vec<Uuid>) + Send + Sync + 'static,
     {
-        self.y_order.observe(move |txn, events| {
-            dbg!("y_order changed");
-            // rebuild order snapshot incrementally
+        let cb = Arc::new(Mutex::new(callback));
+        self.y_order.observe(move |txn, event| {
+            let new_order = event
+                .target()
+                .iter(txn)
+                .map(|id| {
+                    let id_str = String::try_from(id).unwrap();
+                    Uuid::parse_str(&id_str).unwrap()
+                })
+                .collect();
+
+            if let Ok(mut f) = cb.lock() {
+                (f)(new_order);
+            }
         })
     }
 
