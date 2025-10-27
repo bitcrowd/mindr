@@ -100,6 +100,7 @@ pub fn Mindmap() -> Element {
                             if let Some(id) = editing {
                                 let id = graph.add_sibling(id);
                                 pane.editing.set(Some(id));
+                                evt.prevent_default();
                             }
                         }
                     }

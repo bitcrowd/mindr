@@ -134,11 +134,19 @@ impl Graph {
     }
 
     pub fn move_node(&mut self, id: Uuid, coords: (f32, f32)) {
-        if None == self.get_node(id).unwrap().parent_id {
-            self.doc.write().update_node_coords(id, coords);
-        } else {
-            self.move_child_node(id, coords);
-            // self.layout_all();
+        if let Some(node) = self.get_node(id) {
+            if let Some(parent_id) = node.parent_id {
+                if let Some(parent) = self.get_node(parent_id) {
+                    let side = if parent.x > coords.0 {
+                        Side::Left
+                    } else {
+                        Side::Right
+                    };
+                    self.doc.write().update_node_parent(id, parent_id, side)
+                }
+            } else {
+                self.doc.write().update_node_coords(id, coords);
+            }
         }
     }
 
