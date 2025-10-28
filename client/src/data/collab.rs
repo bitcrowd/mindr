@@ -1,9 +1,11 @@
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
+use yrs::updates::decoder::Decode;
+use yrs::updates::encoder::Encode;
 use yrs::{
     types::{EntryChange, Event, PathSegment},
     Any, Array, ArrayRef, DeepObservable, Doc, Map, MapPrelim, MapRef, Observable, Out,
-    Subscription, Transact, TransactionMut,
+    Subscription, Transact, TransactionMut, Update,
 };
 
 pub struct CollabGraph {
@@ -115,6 +117,13 @@ impl CollabGraph {
             y_order: list,
         }
     }
+
+    pub fn update(&mut self, update: Vec<u8>) {
+        self.doc
+            .transact_mut()
+            .apply_update(Update::decode_v2(&update).unwrap());
+    }
+
     pub fn add_node(&mut self, node: Node) -> Uuid {
         let mut txn = self.doc.transact_mut();
 
@@ -160,7 +169,7 @@ impl CollabGraph {
 
     pub fn observe_nodes<F>(&mut self, callback: F) -> Subscription
     where
-        F: FnMut(Uuid, Option<Node>) + Send + Sync + 'static,
+        F: FnMut(Uuid, Option<Node>) + 'static,
     {
         let cb = Arc::new(Mutex::new(callback));
         self.y_nodes.observe_deep(move |txn, events| {
@@ -199,7 +208,7 @@ impl CollabGraph {
 
     pub fn observe_order<F>(&mut self, callback: F) -> Subscription
     where
-        F: FnMut(Vec<Uuid>) + Send + Sync + 'static,
+        F: FnMut(Vec<Uuid>) + 'static,
     {
         let cb = Arc::new(Mutex::new(callback));
         self.y_order.observe(move |txn, event| {
@@ -216,6 +225,20 @@ impl CollabGraph {
                 (f)(new_order);
             }
         })
+    }
+
+    pub fn observe_doc<F>(&self, callback: F) -> Subscription
+    where
+        F: FnMut(Vec<u8>) + 'static,
+    {
+        let cb = Arc::new(Mutex::new(callback));
+        self.doc
+            .observe_update_v2(move |_txn, event| {
+                if let Ok(mut f) = cb.lock() {
+                    (f)(event.update.clone());
+                }
+            })
+            .unwrap()
     }
 
     // observe doc

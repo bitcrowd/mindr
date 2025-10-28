@@ -18,7 +18,7 @@ const COLORS: [&'static str; 8] = [
 pub struct Graph {
     nodes: Signal<HashMap<Uuid, RenderedNode>, SyncStorage>,
     order: Signal<Vec<Uuid>, SyncStorage>,
-    doc: Signal<CollabGraph>,
+    doc: Signal<CollabGraph, SyncStorage>,
     subscriptions: Signal<Vec<yrs::Subscription>>,
 }
 
@@ -26,7 +26,7 @@ impl Graph {
     pub fn new() -> Self {
         let nodes = use_signal_sync(|| HashMap::new());
         let order = use_signal_sync(|| Vec::new());
-        let doc = use_signal(|| CollabGraph::new());
+        let doc = use_signal_sync(|| CollabGraph::new());
         let subscriptions = use_signal(|| Vec::new());
 
         let mut graph = Self {
@@ -96,6 +96,10 @@ impl Graph {
                 self.subscriptions.write().push(sub);
             }
         });
+    }
+
+    pub fn get_doc(&self) -> Signal<CollabGraph, SyncStorage> {
+        self.doc
     }
 
     pub fn add_root_node(&mut self, coords: (f32, f32)) -> Uuid {

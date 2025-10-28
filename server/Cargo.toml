@@ -1,0 +1,13 @@
+[package]
+name = "orbitmind-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.8.6", features = ["ws"] }
+tokio = { version = "1.42", features = ["full"] }
+yrs = { version = "0.24.0" }
+
+# Logging (optional, helpful)
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt"] }
