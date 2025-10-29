@@ -1,9 +1,9 @@
 use dioxus::prelude::*;
-use futures_timer::Delay;
 use futures_util::{select, FutureExt, SinkExt, StreamExt};
 use reqwest::Client;
 use reqwest_websocket::RequestBuilderExt;
 use std::time::Duration;
+use wasm_timer::Delay;
 
 use crate::data::Graph;
 #[derive(Clone)]
@@ -26,7 +26,6 @@ impl Connection {
 
             async move {
                 loop {
-                    // CONNECT
                     let ws = match Client::new()
                         .get("ws://localhost:9000/ws")
                         .upgrade()
@@ -37,13 +36,13 @@ impl Connection {
                             Ok(ws) => ws,
                             Err(e) => {
                                 dbg!("WebSocket upgrade failed:", e);
-                                Delay::new(Duration::from_secs(3)).await;
+                                let _ = Delay::new(Duration::from_secs(3)).await;
                                 continue;
                             }
                         },
                         Err(e) => {
                             dbg!("WebSocket connect failed:", e);
-                            Delay::new(Duration::from_secs(3)).await;
+                            let _ = Delay::new(Duration::from_secs(3)).await;
                             continue;
                         }
                     };
@@ -56,19 +55,16 @@ impl Connection {
                     let mut outgoing = rx.next().fuse();
                     let mut incoming = receiver.next().fuse();
 
-                    // COMM LOOP
                     loop {
                         select! {
-                            // OUTGOING updates from local doc
                             msg = outgoing => match msg {
                                 Some(Message::SendUpdate(bytes)) => {
                                     sender.send(reqwest_websocket::Message::Binary(bytes.into())).await.ok();
                                     outgoing = rx.next().fuse();
                                 }
-                                None => break, // Coroutine closed
+                                None => break,
                             },
 
-                            // INCOMING updates from server
                             msg = incoming => match msg {
                                 Some(Ok(reqwest_websocket::Message::Binary(bytes))) => {
                                   doc.write().update(bytes.to_vec());
@@ -83,41 +79,9 @@ impl Connection {
                     }
 
                     dbg!("Disconnected, retrying...");
-                    Delay::new(Duration::from_secs(2)).await;
+                    let _ = Delay::new(Duration::from_secs(3)).await;
                 }
             }
-            //  let mut doc = doc.clone();
-            //             async move {
-            //                 loop {
-            //                   let websocket = Client::default()
-            //                   .get("ws://localhost:9000/ws")
-            //                   .upgrade()
-            //                   .send()
-            //         .await?
-            //         .into_websocket()
-            //         .await?;
-
-            //                    // connect  {
-            //                         Ok(mut ws) => {
-
-            //     // let (mut wtx, mut wrx) = websocket.split();
-            // // while let Some(msg) = rx.next().await {
-            // //                                match msg {
-            // //                                    Message::SendUpdate(bytes) => {
-            // //                                        sender.send(WsMessage::Binary(bytes))
-            // //                                    }
-            // //                                }
-            // //                            }
-
-            //                         }
-            //                         Err(_) => {
-            //                             dbg!("retry");
-            //                             // Retry after delay if connection fails
-            //                             Delay::new(Duration::from_secs(3)).await;
-            //                         }
-            //                     }
-            //                 }
-            //             }
         });
 
         let mut connection = Self {
@@ -139,7 +103,3 @@ impl Connection {
         });
     }
 }
-
-// Ok(Some(Message::Binary(bin)))  => {
-//                                 doc.write().update(bytes);
-//                             }

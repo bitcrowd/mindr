@@ -66,7 +66,12 @@ pub fn Mindmap() -> Element {
             onmousemove: move |evt| {
                 let coords = evt.element_coordinates();
                 let svg_coords = pane.transform(coords.x as f32, coords.y as f32);
-                pane.update_drag(svg_coords, graph.on(svg_coords));
+                let dragging_node = *pane.dragging_node.read();
+                if let Some(dragging_node) = dragging_node  {
+                  let target = graph.on_other(dragging_node.id, svg_coords);
+                  pane.update_drag(svg_coords, target);
+                  graph.move_node(dragging_node.id, dragging_node.coords);
+                }
                 if *pane.panning.read() {
                     let (start_x, start_y) = *pane.pan_offset.read();
                     pane.transform.write().pan_x += coords.x as f32 - start_x;
@@ -135,7 +140,9 @@ pub fn Mindmap() -> Element {
 
                 if let Some(dragging_node) = *pane.dragging_node.read() {
                     if let Some(node) = graph.get_node(dragging_node.id) {
+                        if node.parent_id.is_some() {
                         DraggedNode { id: node.id, coords: dragging_node.coords }
+                        }
                         if let Some((_, location)) = dragging_node.target {
                             g {
                                 transform: format!(

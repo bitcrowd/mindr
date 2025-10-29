@@ -22,6 +22,14 @@ pub struct Graph {
     subscriptions: Signal<Vec<yrs::Subscription>>,
 }
 
+fn side(parent: RenderedNode, coords: (f32, f32)) -> Side {
+    if parent.x > coords.0 {
+        Side::Left
+    } else {
+        Side::Right
+    }
+}
+
 impl Graph {
     pub fn new() -> Self {
         let nodes = use_signal_sync(|| HashMap::new());
@@ -147,12 +155,9 @@ impl Graph {
         if let Some(node) = self.get_node(id) {
             if let Some(parent_id) = node.parent_id {
                 if let Some(parent) = self.get_node(parent_id) {
-                    let side = if parent.x > coords.0 {
-                        Side::Left
-                    } else {
-                        Side::Right
-                    };
-                    self.doc.write().update_node_parent(id, parent_id, side)
+                    self.doc
+                        .write()
+                        .update_node_parent(id, parent_id, side(parent, coords))
                 }
             } else {
                 self.doc.write().update_node_coords(id, coords);
@@ -172,7 +177,14 @@ impl Graph {
             } else {
                 let side = match location {
                     RelativeLocation::Left => Side::Left,
-                    _ => Side::Right,
+                    RelativeLocation::Right => Side::Right,
+                    _ => {
+                        if let Some(parent) = self.get_node(target_id) {
+                            side(parent, coords)
+                        } else {
+                            Side::Right
+                        }
+                    }
                 };
                 self.doc.write().update_node_parent(id, target_id, side);
             }
@@ -196,6 +208,18 @@ impl Graph {
         for node in self.nodes.read().values() {
             if let Some(relative_location) = node.on(coords) {
                 target = Some((node.id, relative_location))
+            }
+        }
+        target
+    }
+
+    pub fn on_other(&self, id: Uuid, coords: (f32, f32)) -> Option<(Uuid, RelativeLocation)> {
+        let mut target = None;
+        for node in self.nodes.read().values() {
+            if node.id != id {
+                if let Some(relative_location) = node.on(coords) {
+                    target = Some((node.id, relative_location))
+                }
             }
         }
         target

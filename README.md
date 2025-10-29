@@ -17,3 +17,27 @@ or simply
 dx serve
 ```
 
+
+## Roadmap
+
+- Server channels and client UI url selection
+  - fallback to local state 
+- Estimations & sums 
+- Stable coloring + node coloring (colorpicker)
+  - maybe more colors + semi-random color picker
+- Postgres persistance on the server
+- Better interactions 
+  - Delete nodes
+  - Reorder nodes 
+  - Side indicator correctness
+- Optional local save & load 
+- ithoughtsx format import 
+- Incremental state updates with state vectors
+- Writing some tests
+- Markdown export/import
+- Richtext node notes
+- Note node type 
+- Dealing with overlapping trees somehow? 
+- Animations
+
+

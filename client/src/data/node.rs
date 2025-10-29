@@ -60,8 +60,8 @@ impl RenderedNode {
         let (dx, dy) = (x - self.x, y - self.y);
         let (hw, hh) = (w / 2.0, h / 2.0);
 
-        // Tolerance: 15% of smaller dimension, clamped for sanity
-        let tol = (w.min(h) * 0.15).clamp(6.0, 16.0);
+        // Tolerance: 30% of smaller dimension, clamped for sanity
+        let tol = (w.min(h) * 0.30).clamp(6.0, 16.0);
 
         if dx.abs() > hw + tol || dy.abs() > hh + tol {
             return None;
