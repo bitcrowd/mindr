@@ -236,13 +236,6 @@ impl Graph {
             f(node);
         }
     }
-
-    fn move_child_node(&mut self, id: Uuid, (x, y): (f32, f32)) {
-        if let Some(node) = self.nodes.write().get_mut(&id) {
-            node.x = x;
-            node.y = y;
-        }
-    }
 }
 
 struct UpdatedGraph {

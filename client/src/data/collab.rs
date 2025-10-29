@@ -1,11 +1,10 @@
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 use yrs::updates::decoder::Decode;
-use yrs::updates::encoder::Encode;
 use yrs::{
     types::{EntryChange, Event, PathSegment},
-    Any, Array, ArrayRef, DeepObservable, Doc, Map, MapPrelim, MapRef, Observable, Out,
-    Subscription, Transact, TransactionMut, Update,
+    Any, Array, ArrayRef, DeepObservable, Doc, Map, MapPrelim, MapRef, Observable, Out, ReadTxn,
+    StateVector, Subscription, Transact, TransactionMut, Update,
 };
 
 pub struct CollabGraph {
@@ -119,7 +118,8 @@ impl CollabGraph {
     }
 
     pub fn update(&mut self, update: Vec<u8>) {
-        self.doc
+        let _ = self
+            .doc
             .transact_mut()
             .apply_update(Update::decode_v2(&update).unwrap());
     }
@@ -241,13 +241,8 @@ impl CollabGraph {
             .unwrap()
     }
 
-    // observe doc
-    //
-    // self.subscriptions.push(
-    //     self.doc
-    //         .observe_update_v2(move |txn, event| {
-    //             dbg!(&event.update);
-    //         })
-    //         .expect("PANIC"),
-    // );
+    pub fn get_state_as_update(&self) -> Vec<u8> {
+        let txn = self.doc.transact();
+        txn.encode_state_as_update_v2(&StateVector::default())
+    }
 }

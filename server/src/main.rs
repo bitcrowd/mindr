@@ -8,7 +8,7 @@ use axum::{
 };
 use tokio::sync::broadcast;
 use yrs::updates::decoder::Decode;
-use yrs::{Doc, ReadTxn, Transact, Update};
+use yrs::{Doc, ReadTxn, StateVector, Transact, Update};
 
 #[tokio::main]
 async fn main() {
@@ -46,7 +46,7 @@ async fn handle_socket(
     let full_state = {
         let doc_guard = doc.lock().unwrap();
         let txn = doc_guard.transact();
-        txn.encode_state_as_update_v2(&txn.state_vector())
+        txn.encode_state_as_update_v2(&StateVector::default())
     };
     if socket
         .send(Message::Binary(full_state.into()))

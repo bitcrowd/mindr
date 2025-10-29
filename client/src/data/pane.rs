@@ -72,11 +72,4 @@ impl Pane {
             }
         });
     }
-
-    pub fn is_dragging(&self, id: Uuid) -> bool {
-        if let Some(node) = *self.dragging_node.read() {
-            return node.id == id;
-        }
-        return false;
-    }
 }

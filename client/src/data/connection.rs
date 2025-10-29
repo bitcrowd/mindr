@@ -48,6 +48,11 @@ impl Connection {
                         }
                     };
                     let (mut sender, mut receiver) = ws.split();
+                    let full_state = doc.read().get_state_as_update();
+                    sender
+                        .send(reqwest_websocket::Message::Binary(full_state.into()))
+                        .await
+                        .ok();
                     let mut outgoing = rx.next().fuse();
                     let mut incoming = receiver.next().fuse();
 
