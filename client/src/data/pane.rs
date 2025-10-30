@@ -28,6 +28,7 @@ pub struct Pane {
     pub minimap_dragging: Signal<bool>,
     pub minimap_drag_offset: Signal<(f32, f32)>,
     pub editing: Signal<Option<Uuid>>,
+    pub selected: Signal<Option<Uuid>>,
 }
 
 impl Pane {
@@ -44,6 +45,7 @@ impl Pane {
             minimap_dragging: use_signal(|| false),
             minimap_drag_offset: use_signal(|| (0f32, 0f32)),
             editing: use_signal(|| None),
+            selected: use_signal(|| None),
         }
     }
 

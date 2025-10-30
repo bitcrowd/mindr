@@ -4,6 +4,8 @@ use dioxus_motion::prelude::*;
 use std::rc::Rc;
 use uuid::Uuid;
 
+const SELECTED_PADDING: f32 = 5.0;
+
 #[component]
 pub fn DraggedNode(id: Uuid, coords: (f32, f32)) -> Element {
     // Create motion values for scale and opacity
@@ -129,26 +131,77 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                         stroke: "black",
                     }
                 }
+
+                if *store.pane.selected.read() == Some(id) {
+                    rect {
+                        x: format!("{}", (-width / 2.0) - SELECTED_PADDING),
+                        y: format!("{}", (-height / 2.0) - SELECTED_PADDING),
+                        width: format!("{}", width + SELECTED_PADDING * 2.0),
+                        height: format!("{}", height + SELECTED_PADDING * 2.0),
+                        rx: "12",
+                        ry: "12",
+                        stroke: "red",
+                        fill: "none",
+                        "stroke-width": "1",
+                        "stroke-dasharray": "4",
+                    }
+                }
                 foreignObject {
                     x: format!("{}", -width / 2.0),
                     y: format!("{}", -height / 2.0),
                     width: format!("{}", width),
                     height: format!("{}", height),
-                    style: "user-select: none;",
-                    textarea {
-                        style: if store.pane.dragging_node.read().is_some() { "pointer-events: none;" } else { "" },
-                        key: "{id}-textarea",
-                        onmounted: move |element| input_element.set(Some(element.data())),
-                        value: "{node.text}",
-                        autofocus: "true",
-                        autocomplete: "off",
-                        autocapitalize: "off",
-                        spellcheck: "false",
-                        tabindex: "-1",
-                        style: "user-select: none; padding-top: 7px; padding-bottom: 10px; width: 100%; height: 100%; outline:none; background: transparent; border: none; resize:none; overflow:hidden; text-align: center; font-size: {font_size}px; display: block",
-                        oninput: move |evt| {
-                            store.graph.update_node_text(id, evt.value().clone());
-                        },
+                    if *store.pane.editing.read() == Some(node.id) {
+                        textarea {
+                            style: if store.pane.dragging_node.read().is_some() { "pointer-events: none;" } else { "" },
+                            key: "{id}-textarea",
+                            onmounted: move |element| input_element.set(Some(element.data())),
+                            value: "{node.text}",
+                            autofocus: true,
+                            autocomplete: "off",
+                            autocapitalize: "off",
+                            spellcheck: "false",
+                            tabindex: -1,
+                            style: "
+                              user-select: none;
+                              padding-top: 8px;
+                              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                              padding-bottom: 10px;
+                              width: 100%;
+                              height: 100%;
+                              outline:none;
+                              background: transparent;
+                              border: none;
+                              resize:none;
+                              overflow:hidden;
+                              text-align: center;
+                              font-size: {font_size}px;
+                              display: block;
+                              line-height: 1.2",
+                            oninput: move |evt| {
+                                store.graph.update_node_text(id, evt.value().clone());
+                            },
+                        }
+                    } else {
+                        div { style: "
+                                vertical-align: top;
+                                line-height: 1.2;
+                                padding-left: 2px;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                width: 100%;
+                                height: 100%;
+                                overflow: hidden;
+                                white-space: pre-wrap;
+                                word-wrap: break-word;
+                                text-align: center;
+                                font-size: {font_size}px;
+                                background: transparent;
+                                color: black;
+                                font-family: inherit;",
+                            {node.text}
+                        }
                     }
                 }
             }
