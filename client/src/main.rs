@@ -1,12 +1,9 @@
-// The dioxus prelude contains a ton of common items used in dioxus apps. It's a good idea to import wherever you
-// need dioxus
 use dioxus::prelude::*;
 
-use views::Mindmap;
+use components::Mindmap;
 
 mod components;
 mod data;
-mod views;
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/styling/main.css");

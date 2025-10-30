@@ -14,3 +14,6 @@ pub use location_indicator::LocationIndicator;
 
 mod minimap;
 pub use minimap::MiniMap;
+
+mod mindmap;
+pub use mindmap::Mindmap;

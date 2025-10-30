@@ -183,7 +183,8 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                             },
                         }
                     } else {
-                        div { style: "
+                        div {
+                            style: "
                                 vertical-align: top;
                                 line-height: 1.2;
                                 padding-left: 2px;
@@ -199,6 +200,11 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                                 font-size: {font_size}px;
                                 background: transparent;
                                 color: black;
+                                pointer-events: none;
+                                -webkit-user-select: none;
+                                -moz-user-select: none;
+                                -ms-user-select: none;
+                                user-select: none;
                                 font-family: inherit;",
                             {node.text}
                         }

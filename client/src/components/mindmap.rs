@@ -16,19 +16,26 @@ pub fn Mindmap() -> Element {
     let t = *store.pane.transform.read();
     let mut size = use_signal(|| (0f32, 0f32));
 
-    let mut links = Vec::new();
     let mut nodes = Vec::new();
+    let dragging_id = (*pane.dragging_node.read()).map(|n| n.id);
     graph.for_each_node(|node| {
-        // Links first
-        if let Some(parent_id) = node.parent_id {
-            links.push(rsx! {
-                NodeLink { id: node.id, parent_id, store: store.clone() }
-            });
-        }
-
-        nodes.push(rsx! {
-            Node { id: node.id, store: store.clone(), key: node.id }
-        });
+        nodes.push((
+            node.id,
+            rsx! {
+                if let Some(parent_id) = node.parent_id {
+                    NodeLink {
+                        id: node.id,
+                        parent_id,
+                        store: store.clone(),
+                    }
+                }
+                Node { id: node.id, store: store.clone(), key: node.id }
+            },
+        ));
+    });
+    nodes.sort_by_key(|(id, _)| {
+        let root_id = graph.get_root(*id);
+        (dragging_id != root_id, root_id)
     });
     rsx! {
         div {
@@ -148,11 +155,8 @@ pub fn Mindmap() -> Element {
                 },
 
                 g { transform: format!("translate({},{}) scale({})", t.pan_x, t.pan_y, t.scale),
-                    for link in links {
-                        {link}
-                    }
-                    for node in nodes {
-                        {node}
+                    for (_ , rendered) in nodes {
+                        {rendered}
                     }
 
                     if let Some(dragging_node) = *pane.dragging_node.read() {
