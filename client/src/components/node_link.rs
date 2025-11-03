@@ -3,13 +3,33 @@ use dioxus::prelude::*;
 use uuid::Uuid;
 
 #[component]
+pub fn RedCross(x: f32, y: f32) -> Element {
+    rsx! {
+        g {
+           transform: "translate({x - 20.0}, {y})",
+            stroke: "#FF0000",
+            stroke_width: 2,
+            stroke_linecap: "round",
+
+            line { x1: -6, y1: -6, x2: 6, y2: 6 }
+            line { x1: 6, y1: -6, x2: -6, y2: 6 }
+            line { x1: 5, y1: 0, x2: 20, y2: 0, stroke: "black"}
+        }
+    }
+}
+#[component]
 pub fn NodeLink(id: Uuid, parent_id: Uuid, store: Store) -> Element {
     let graph = store.graph;
-    let Some(parent) = graph.get_node(parent_id) else {
-        return rsx! {};
-    };
     let Some(child) = graph.get_node(id) else {
         return rsx! {};
+    };
+
+    let Some(parent) = graph.get_node(parent_id) else {
+        let x = child.x - child.width() / 2.0;
+        let y = child.y;
+        return rsx! {
+          RedCross { x, y }
+        };
     };
 
     let is_right = child.x > parent.x;

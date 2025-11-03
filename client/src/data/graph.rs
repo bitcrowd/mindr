@@ -1,7 +1,7 @@
 use crate::data::{CollabGraph, RelativeLocation, RenderedNode};
 use crate::data::{Node, NodeKind};
 use dioxus::prelude::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
@@ -13,6 +13,7 @@ const SPACING_Y: f32 = 10.0; // vertical gap between siblings
 const COLORS: [&'static str; 8] = [
     "#ffc6ff", "#ffadad", "#ffd6a5", "#fdffb6", "#caffbf", "#9bf6ff", "#a0c4ff", "#bdb2ff",
 ];
+const ORPHAN_COLOR: &'static str = "#999999";
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Graph {
@@ -30,6 +31,44 @@ fn side(parent: RenderedNode, coords: (f32, f32)) -> Side {
     }
 }
 
+fn child_map(
+    nodes: Signal<HashMap<Uuid, RenderedNode>, SyncStorage>,
+    order: Signal<Vec<Uuid>, SyncStorage>,
+) -> HashMap<Uuid, Vec<Uuid>> {
+    let mut map = HashMap::new();
+    for id in order.read().clone() {
+        map.entry(id).or_insert_with(Vec::new);
+        if let Some(node) = nodes.read().get(&id) {
+            if let Some(parent_id) = node.parent_id {
+                map.entry(parent_id).or_insert_with(Vec::new).push(id);
+            }
+        }
+    }
+    map
+}
+
+fn bounds<'a, I>(iter: I) -> (f32, f32, f32, f32)
+where
+    I: IntoIterator<Item = &'a RenderedNode>,
+{
+    let mut iter = iter.into_iter();
+
+    if let Some(first) = iter.next() {
+        iter.fold(
+            (first.x, first.x, first.y, first.y),
+            |(min_x, max_x, min_y, max_y), n| {
+                (
+                    min_x.min(n.x),
+                    max_x.max(n.x),
+                    min_y.min(n.y),
+                    max_y.max(n.y),
+                )
+            },
+        )
+    } else {
+        (0.0, 1.0, 0.0, 1.0) // default for empty
+    }
+}
 impl Graph {
     pub fn new() -> Self {
         let nodes = use_signal_sync(|| HashMap::new());
@@ -78,11 +117,7 @@ impl Graph {
                         nodes.write().remove(&id);
                     }
                     if let Ok(_guard) = layout_lock.try_lock() {
-                        UpdatedGraph {
-                            nodes: nodes,
-                            order: order,
-                        }
-                        .layout_all();
+                        UpdatedGraph::new(nodes, order).layout_all();
                     }
                 });
                 self.subscriptions.write().push(sub);
@@ -93,11 +128,7 @@ impl Graph {
                 let sub = self.doc.write().observe_order(move |new_order| {
                     order.set(new_order);
                     if let Ok(_guard) = layout_lock.try_lock() {
-                        UpdatedGraph {
-                            nodes: nodes,
-                            order: order,
-                        }
-                        .layout_all();
+                        UpdatedGraph::new(nodes, order).layout_all();
                     }
                 });
 
@@ -151,6 +182,31 @@ impl Graph {
         self.doc.write().update_node_text(id, new_text)
     }
 
+    pub fn delete_node(&mut self, id: Uuid) {
+        self.doc.write().delete_node(id);
+    }
+
+    pub fn delete_branch(&mut self, id: Uuid) {
+        let ids = self.all_children(id);
+        self.doc.write().delete_nodes(ids);
+    }
+
+    fn all_children(&mut self, id: Uuid) -> Vec<Uuid> {
+        let map = child_map(self.nodes, self.order);
+        self._all_children(id, &map)
+    }
+    fn _all_children(&mut self, id: Uuid, child_map: &HashMap<Uuid, Vec<Uuid>>) -> Vec<Uuid> {
+        let mut all: Vec<Uuid> = Vec::new();
+        all.push(id);
+        if let Some(child_ids) = child_map.get(&id) {
+            for child_id in child_ids {
+                let descendants = self._all_children(*child_id, child_map);
+                all.extend(descendants);
+            }
+        }
+        all
+    }
+
     pub fn move_node(&mut self, id: Uuid, coords: (f32, f32)) {
         if let Some(node) = self.get_node(id) {
             if let Some(parent_id) = node.parent_id {
@@ -172,7 +228,7 @@ impl Graph {
         target: Option<(Uuid, RelativeLocation)>,
     ) {
         if let Some((target_id, location)) = target {
-            if self.get_root(target_id) == Some(id) {
+            if self.get_root(target_id) == id {
                 self.move_node(id, coords);
             } else {
                 let side = match location {
@@ -193,14 +249,16 @@ impl Graph {
         }
     }
 
-    pub fn get_root(&self, id: Uuid) -> Option<Uuid> {
-        self.get_node(id).map(|n| {
-            if let Some(parent_id) = n.parent_id {
-                return self.get_root(parent_id).unwrap();
-            } else {
-                return id;
-            }
-        })
+    pub fn get_root(&self, id: Uuid) -> Uuid {
+        self.get_node(id)
+            .map(|n| {
+                if let Some(parent_id) = n.parent_id {
+                    return self.get_root(parent_id);
+                } else {
+                    return id;
+                }
+            })
+            .unwrap_or(id)
     }
 
     pub fn on(&self, coords: (f32, f32)) -> Option<(Uuid, RelativeLocation)> {
@@ -230,26 +288,7 @@ impl Graph {
     }
 
     pub fn bounds(&self) -> (f32, f32, f32, f32) {
-        if self.nodes.read().is_empty() {
-            return (0.0, 1.0, 0.0, 1.0);
-        }
-
-        self.nodes.read().values().fold(
-            (
-                f32::INFINITY,
-                f32::NEG_INFINITY,
-                f32::INFINITY,
-                f32::NEG_INFINITY,
-            ),
-            |(min_x, max_x, min_y, max_y), n| {
-                (
-                    min_x.min(n.x),
-                    max_x.max(n.x),
-                    min_y.min(n.y),
-                    max_y.max(n.y),
-                )
-            },
-        )
+        bounds(self.nodes.read().values())
     }
 
     pub fn for_each_node<F>(&self, mut f: F)
@@ -265,9 +304,24 @@ impl Graph {
 struct UpdatedGraph {
     nodes: Signal<HashMap<Uuid, RenderedNode>, SyncStorage>,
     order: Signal<Vec<Uuid>, SyncStorage>,
+    child_map: HashMap<Uuid, Vec<Uuid>>,
+    connected: HashSet<Uuid>,
 }
 
 impl UpdatedGraph {
+    pub fn new(
+        nodes: Signal<HashMap<Uuid, RenderedNode>, SyncStorage>,
+        order: Signal<Vec<Uuid>, SyncStorage>,
+    ) -> Self {
+        let map = child_map(nodes, order);
+        Self {
+            nodes,
+            order,
+            connected: HashSet::new(),
+            child_map: map,
+        }
+    }
+
     pub fn layout_all(&mut self) {
         let root_ids: Vec<Uuid> = self
             .nodes
@@ -279,7 +333,49 @@ impl UpdatedGraph {
 
         for root_id in root_ids {
             self.layout_subtree(root_id);
-            self.colorize(root_id);
+            self.visit_and_colorize(root_id);
+        }
+
+        let (mut orphan_root_ids, (x_min, _, _, y_max)) = {
+            let nodes = self.nodes.read();
+            let (connected, orphans): (Vec<_>, Vec<_>) =
+                nodes.iter().partition(|(k, _)| self.connected.contains(k));
+
+            let bounds = bounds(connected.into_iter().map(|(_, v)| v));
+
+            let orphan_root_ids: Vec<Uuid> = orphans
+                .into_iter()
+                .filter(|(_, n)| n.parent_id.map_or(true, |p| self.get_node(p).is_none()))
+                .map(|(k, _)| k.clone())
+                .collect();
+            (orphan_root_ids, bounds)
+        };
+        let mut y = y_max + SPACING_Y * 10.0;
+        if orphan_root_ids.is_empty() {
+            return;
+        }
+        let order_map: HashMap<_, _> = self
+            .order
+            .read()
+            .iter()
+            .enumerate()
+            .map(|(i, &v)| (v, i))
+            .collect();
+        orphan_root_ids.sort_by_key(|v| order_map.get(v).copied().unwrap_or(usize::MAX));
+        for root_id in orphan_root_ids {
+            {
+                let mut heights = std::collections::HashMap::<Uuid, f32>::new();
+                let height = self.compute_subtree_heights(root_id, &mut heights);
+
+                if let Some(node) = self.nodes.write().get_mut(&root_id) {
+                    node.x = x_min;
+                    y += SPACING_Y + height;
+                    node.y = y - height / 2.0;
+                }
+                let children = self.direct_children(root_id);
+                self.spread_children_vertically(root_id, &children, &heights, 1.0);
+            }
+            self.visit_and_colorize_with(root_id, ORPHAN_COLOR);
         }
     }
 
@@ -287,19 +383,21 @@ impl UpdatedGraph {
         self.nodes.read().get(&id).cloned()
     }
 
-    fn colorize_with(&mut self, node_id: Uuid, color: &'static str) {
+    fn visit_and_colorize_with(&mut self, node_id: Uuid, color: &'static str) {
         for child_id in self.direct_children(node_id) {
-            self.colorize_with(child_id, color);
+            self.visit_and_colorize_with(child_id, color);
         }
         if let Some(node) = self.nodes.write().get_mut(&node_id) {
+            self.connected.insert(node.id.clone());
             node.color = color;
         }
     }
 
-    fn colorize(&mut self, root_id: Uuid) {
+    fn visit_and_colorize(&mut self, root_id: Uuid) {
+        self.connected.insert(root_id.clone());
         for (i, child_id) in self.direct_children(root_id).iter().enumerate() {
             let color = COLORS[i % COLORS.len()];
-            self.colorize_with(*child_id, color);
+            self.visit_and_colorize_with(*child_id, color);
         }
     }
 
@@ -330,12 +428,11 @@ impl UpdatedGraph {
     }
 
     fn direct_children(&self, node_id: Uuid) -> Vec<Uuid> {
-        self.order
-            .iter()
-            .filter_map(|n| self.get_node(*n))
-            .filter(|n| n.parent_id == Some(node_id))
-            .map(|n| n.id)
-            .collect()
+        if let Some(ids) = self.child_map.get(&node_id) {
+            ids.clone()
+        } else {
+            Vec::new()
+        }
     }
 
     fn spread_children_vertically(

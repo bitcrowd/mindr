@@ -6,6 +6,7 @@ use crate::components::NodeLink;
 use crate::data::RelativeLocation;
 use crate::data::Store;
 use dioxus::prelude::*;
+use std::rc::Rc;
 
 #[component]
 pub fn Mindmap() -> Element {
@@ -16,6 +17,8 @@ pub fn Mindmap() -> Element {
     let t = *store.pane.transform.read();
     let mut size = use_signal(|| (0f32, 0f32));
 
+    let mut container: Signal<Option<Rc<MountedData>>> = use_signal(|| None);
+
     let mut nodes = Vec::new();
     let dragging_id = (*pane.dragging_node.read()).map(|n| n.id);
     graph.for_each_node(|node| {
@@ -23,11 +26,7 @@ pub fn Mindmap() -> Element {
             node.id,
             rsx! {
                 if let Some(parent_id) = node.parent_id {
-                    NodeLink {
-                        id: node.id,
-                        parent_id,
-                        store: store.clone(),
-                    }
+                    NodeLink { id: node.id, parent_id, store: store.clone() }
                 }
                 Node { id: node.id, store: store.clone(), key: node.id }
             },
@@ -35,33 +34,35 @@ pub fn Mindmap() -> Element {
     });
     nodes.sort_by_key(|(id, _)| {
         let root_id = graph.get_root(*id);
-        (dragging_id != root_id, root_id)
+        (dragging_id != Some(root_id), root_id)
     });
     rsx! {
         div {
             tabindex: 0,
             autofocus: pane.editing.read().is_none(),
+            onmounted: move |element| container.set(Some(element.data())),
             onkeydown: move |evt| {
                 let selected = *store.pane.selected.read();
-                let editing = *store.pane.selected.read();
+                let editing = *store.pane.editing.read();
+                let shift = evt.modifiers().shift();
                 match evt.key() {
                     Key::Enter => {
-                        if !evt.modifiers().shift() {
-                            if let Some(id) = editing {
+                        if let Some(id) = editing {
+                            if !shift {
                                 let id = graph.add_sibling(id);
                                 pane.editing.set(Some(id));
                                 pane.selected.set(Some(id));
                                 evt.prevent_default();
-                            } else {
-                                if let Some(id) = selected {
-                                    pane.editing.set(Some(id));
-                                }
+                            }
+                        } else {
+                            if let Some(id) = selected {
+                                pane.editing.set(Some(id));
                             }
                         }
                     }
                     Key::Tab => {
                         if let Some(id) = selected {
-                            let dir = if evt.modifiers().shift() {
+                            let dir = if shift {
                                 RelativeLocation::Left
                             } else {
                                 RelativeLocation::Right
@@ -73,8 +74,29 @@ pub fn Mindmap() -> Element {
                         evt.prevent_default();
                     }
                     Key::Escape => {
-                        pane.editing.set(None);
-                        pane.selected.set(None);
+                        if pane.editing.read().is_none() {
+                            pane.selected.set(None);
+                        } else {
+                            pane.editing.set(None);
+                        }
+                        if let Some(div) = &*container.read() {
+                            let _ = div.set_focus(true);
+                        }
+                        evt.prevent_default();
+                        evt.stop_propagation();
+                    }
+                    Key::Backspace => {
+                        if pane.editing.read().is_none() {
+                            if let Some(id) = *pane.selected.read() {
+                                if shift {
+                                    graph.delete_node(id);
+                                } else {
+                                    graph.delete_branch(id);
+                                }
+                            }
+                            pane.dragging_node.set(None);
+                            pane.selected.set(None);
+                        }
                     }
                     _ => {}
                 }

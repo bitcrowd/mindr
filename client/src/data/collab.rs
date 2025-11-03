@@ -47,7 +47,18 @@ pub struct Node {
     pub text: String,
     pub kind: NodeKind,
 }
-
+fn remove_uuids(order: ArrayRef, txn: &mut TransactionMut, ids: Vec<String>) {
+    let mut idxs = Vec::new();
+    for (i, item) in order.iter(txn).enumerate() {
+        if ids.contains(&item.to_string(txn)) {
+            idxs.push(i as u32);
+        }
+    }
+    idxs.reverse();
+    for idx in idxs.iter() {
+        order.remove(txn, *idx);
+    }
+}
 impl Node {
     pub fn new_root(coords: (f32, f32)) -> Self {
         Node {
@@ -144,6 +155,24 @@ impl CollabGraph {
         self.y_order
             .push_back::<Any>(&mut txn, id.to_string().clone().into());
         id
+    }
+
+    pub fn delete_node(&mut self, id: Uuid) {
+        let mut txn = self.doc.transact_mut();
+        self.y_nodes.remove(&mut txn, &id.to_string());
+        remove_uuids(self.y_order.clone(), &mut txn, vec![id.to_string()]);
+    }
+
+    pub fn delete_nodes(&mut self, ids: Vec<Uuid>) {
+        let mut txn = self.doc.transact_mut();
+        for id in &ids {
+            self.y_nodes.remove(&mut txn, &id.to_string());
+        }
+        remove_uuids(
+            self.y_order.clone(),
+            &mut txn,
+            ids.iter().map(|id| id.to_string()).collect(),
+        );
     }
 
     pub fn update_node_coords(&mut self, id: Uuid, coords: (f32, f32)) {

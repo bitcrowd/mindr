@@ -27,7 +27,6 @@ dx serve
   - maybe more colors + semi-random color picker
 - Postgres persistance on the server
 - Better interactions 
-  - Delete nodes
   - Reorder nodes 
   - Side indicator correctness
 - Optional local save & load 

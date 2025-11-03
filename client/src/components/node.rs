@@ -101,9 +101,11 @@ pub fn Node(id: Uuid, store: Store) -> Element {
     let font_size = node.font_size();
     let is_editing = *store.pane.editing.read() == Some(id);
     let mut input_element: Signal<Option<Rc<MountedData>>> = use_signal(|| None);
-    if let Some(input) = &*input_element.read() {
-        let _ = input.set_focus(is_editing);
-    }
+    use_effect(move || {
+        if let Some(input) = &*input_element.read() {
+            let _ = input.set_focus(is_editing);
+        }
+    });
 
     rsx! {
         g { transform: format!("translate({},{})", node.x, node.y),
