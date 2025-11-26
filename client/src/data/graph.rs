@@ -10,10 +10,10 @@ use super::collab::Side;
 const SPACING_X: f32 = 50.0; // horizontal gap between parent and child
 const SPACING_Y: f32 = 10.0; // vertical gap between siblings
 
-const COLORS: [&'static str; 8] = [
+const COLORS: [&str; 8] = [
     "#ffc6ff", "#ffadad", "#ffd6a5", "#fdffb6", "#caffbf", "#9bf6ff", "#a0c4ff", "#bdb2ff",
 ];
-const ORPHAN_COLOR: &'static str = "#999999";
+const ORPHAN_COLOR: &str = "#999999";
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Graph {
@@ -71,10 +71,10 @@ where
 }
 impl Graph {
     pub fn new() -> Self {
-        let nodes = use_signal_sync(|| HashMap::new());
-        let order = use_signal_sync(|| Vec::new());
-        let doc = use_signal_sync(|| CollabGraph::new());
-        let subscriptions = use_signal(|| Vec::new());
+        let nodes = use_signal_sync(HashMap::new);
+        let order = use_signal_sync(Vec::new);
+        let doc = use_signal_sync(CollabGraph::new);
+        let subscriptions = use_signal(Vec::new);
 
         let mut graph = Self {
             nodes,
@@ -87,8 +87,8 @@ impl Graph {
     }
 
     fn subscribe(&mut self) {
-        let mut nodes = self.nodes.clone();
-        let mut order = self.order.clone();
+        let mut nodes = self.nodes;
+        let mut order = self.order;
         use_hook(|| {
             let layout_lock = Arc::new(Mutex::new(()));
             {
@@ -253,9 +253,9 @@ impl Graph {
         self.get_node(id)
             .map(|n| {
                 if let Some(parent_id) = n.parent_id {
-                    return self.get_root(parent_id);
+                    self.get_root(parent_id)
                 } else {
-                    return id;
+                    id
                 }
             })
             .unwrap_or(id)
@@ -327,7 +327,7 @@ impl UpdatedGraph {
             .nodes
             .read()
             .values()
-            .filter(|n| n.parent_id == None)
+            .filter(|n| n.parent_id.is_none())
             .map(|n| n.id)
             .collect();
 
@@ -345,8 +345,8 @@ impl UpdatedGraph {
 
             let orphan_root_ids: Vec<Uuid> = orphans
                 .into_iter()
-                .filter(|(_, n)| n.parent_id.map_or(true, |p| self.get_node(p).is_none()))
-                .map(|(k, _)| k.clone())
+                .filter(|(_, n)| n.parent_id.is_none_or(|p| self.get_node(p).is_none()))
+                .map(|(k, _)| *k)
                 .collect();
             (orphan_root_ids, bounds)
         };
@@ -388,13 +388,13 @@ impl UpdatedGraph {
             self.visit_and_colorize_with(child_id, color);
         }
         if let Some(node) = self.nodes.write().get_mut(&node_id) {
-            self.connected.insert(node.id.clone());
+            self.connected.insert(node.id);
             node.color = color;
         }
     }
 
     fn visit_and_colorize(&mut self, root_id: Uuid) {
-        self.connected.insert(root_id.clone());
+        self.connected.insert(root_id);
         for (i, child_id) in self.direct_children(root_id).iter().enumerate() {
             let color = COLORS[i % COLORS.len()];
             self.visit_and_colorize_with(*child_id, color);

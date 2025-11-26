@@ -85,7 +85,7 @@ fn RawNode(node: crate::data::RenderedNode) -> Element {
     let width = node.width();
     let height = node.height();
     rsx! {
-        if node.parent_id == None {
+        if node.parent_id.is_none() {
             RawRootNode { width, height, color: node.color }
         } else {
             RawChildNode { width, height, color: node.color }

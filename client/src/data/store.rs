@@ -13,7 +13,7 @@ impl Store {
     pub fn new() -> Self {
         let graph = Graph::new();
         Self {
-            graph: graph.clone(),
+            graph,
             pane: Pane::new(),
             connection: Connection::new(graph),
         }

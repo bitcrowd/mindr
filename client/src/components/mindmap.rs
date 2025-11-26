@@ -54,10 +54,8 @@ pub fn Mindmap() -> Element {
                                 pane.selected.set(Some(id));
                                 evt.prevent_default();
                             }
-                        } else {
-                            if let Some(id) = selected {
-                                pane.editing.set(Some(id));
-                            }
+                        } else if let Some(id) = selected {
+                          pane.editing.set(Some(id));
                         }
                     }
                     Key::Tab => {
@@ -200,7 +198,11 @@ pub fn Mindmap() -> Element {
                     }
                 }
 
-                MiniMap { store: store.clone(), svg_size: size.clone() }
+                MiniMap { store: store.clone(), svg_size: size }
+            }
+            div {
+              class: "sidebar",
+              "test"
             }
         }
     }

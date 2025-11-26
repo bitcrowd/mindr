@@ -22,7 +22,7 @@ impl Connection {
     pub fn new(graph: Graph) -> Self {
         let doc = graph.get_doc();
         let coroutine = use_coroutine(move |mut rx: UnboundedReceiver<Message>| {
-            let mut doc = doc.clone();
+            let mut doc = doc;
 
             async move {
                 loop {
@@ -95,7 +95,7 @@ impl Connection {
 
     fn subscribe(&mut self) {
         use_hook(|| {
-            let coroutine = self.coroutine.clone();
+            let coroutine = self.coroutine;
             let subscription = self.graph.get_doc().read().observe_doc(move |update| {
                 coroutine.send(Message::SendUpdate(update));
             });

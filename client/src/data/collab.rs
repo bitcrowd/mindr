@@ -78,20 +78,17 @@ impl Node {
         if let Some(parent_id) = map.get(txn, "parent_id") {
             let parent_id = Uuid::parse_str(&String::try_from(parent_id).unwrap()).unwrap();
             let side = String::try_from(map.get(txn, "side").unwrap())
-                .map(|s| Side::from(s))
+                .map(Side::from)
                 .unwrap();
             Node {
-                text: text,
-                kind: NodeKind::Child {
-                    parent_id: parent_id.into(),
-                    side: side,
-                },
+                text,
+                kind: NodeKind::Child { side, parent_id },
             }
         } else {
             let x = extract_f64(&map.get(txn, "x").unwrap()).unwrap() as f32;
             let y = extract_f64(&map.get(txn, "y").unwrap()).unwrap() as f32;
             Node {
-                text: text,
+                text,
                 kind: NodeKind::Root { coords: (x, y) },
             }
         }
@@ -118,13 +115,13 @@ fn update_parent(txn: &mut TransactionMut, ymap: MapRef, parent_id: Uuid, side: 
 impl CollabGraph {
     pub fn new() -> Self {
         let doc = Doc::new();
-        let map = doc.get_or_insert_map("nodes");
-        let list = doc.get_or_insert_array("order");
+        let y_nodes = doc.get_or_insert_map("nodes");
+        let y_order = doc.get_or_insert_array("order");
 
         CollabGraph {
-            doc: doc,
-            y_nodes: map,
-            y_order: list,
+            doc,
+            y_nodes,
+            y_order,
         }
     }
 
@@ -177,21 +174,21 @@ impl CollabGraph {
 
     pub fn update_node_coords(&mut self, id: Uuid, coords: (f32, f32)) {
         let mut txn = self.doc.transact_mut();
-        if let Some(Out::YMap(ymap)) = self.y_nodes.get(&mut txn, &id.to_string()) {
+        if let Some(Out::YMap(ymap)) = self.y_nodes.get(&txn, &id.to_string()) {
             update_coords(&mut txn, ymap, coords);
         }
     }
 
     pub fn update_node_parent(&mut self, id: Uuid, parent_id: Uuid, side: Side) {
         let mut txn = self.doc.transact_mut();
-        if let Some(Out::YMap(ymap)) = self.y_nodes.get(&mut txn, &id.to_string()) {
+        if let Some(Out::YMap(ymap)) = self.y_nodes.get(&txn, &id.to_string()) {
             update_parent(&mut txn, ymap, parent_id, side);
         }
     }
 
     pub fn update_node_text(&mut self, id: Uuid, text: String) {
         let mut txn = self.doc.transact_mut();
-        if let Some(Out::YMap(ymap)) = self.y_nodes.get(&mut txn, &id.to_string()) {
+        if let Some(Out::YMap(ymap)) = self.y_nodes.get(&txn, &id.to_string()) {
             ymap.insert::<&str, Any>(&mut txn, "text", text.into());
         }
     }
@@ -222,12 +219,10 @@ impl CollabGraph {
                                 (f)(id, node);
                             }
                         }
-                    } else {
-                        if let PathSegment::Key(key) = &path[0] {
-                            let id = Uuid::parse_str(key).expect("Expected Node ID");
-                            if let Ok(mut f) = cb.lock() {
-                                (f)(id, Some(Node::from_txn(txn, map_event.target())));
-                            }
+                    } else if let PathSegment::Key(key) = &path[0] {
+                        let id = Uuid::parse_str(key).expect("Expected Node ID");
+                        if let Ok(mut f) = cb.lock() {
+                            (f)(id, Some(Node::from_txn(txn, map_event.target())));
                         }
                     }
                 }

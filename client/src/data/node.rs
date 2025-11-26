@@ -21,7 +21,7 @@ pub struct RenderedNode {
 }
 
 const TEXT_PADDING: f32 = 10.0;
-const DEFAULT_COLOR: &'static str = "#bdb2ff";
+const DEFAULT_COLOR: &str = "#bdb2ff";
 impl RenderedNode {
     pub fn new(id: Uuid, (x, y): (f32, f32), parent_id: Option<Uuid>, text: String) -> Self {
         Self {
