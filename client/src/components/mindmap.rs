@@ -3,6 +3,7 @@ use crate::components::LocationIndicator;
 use crate::components::MiniMap;
 use crate::components::Node;
 use crate::components::NodeLink;
+use crate::components::Sidebar;
 use crate::data::RelativeLocation;
 use crate::data::Store;
 use dioxus::prelude::*;
@@ -38,8 +39,10 @@ pub fn Mindmap() -> Element {
     });
     rsx! {
         div {
+        div {
+            class: "wrapper",
             tabindex: 0,
-            autofocus: pane.editing.read().is_none(),
+            // autofocus: pane.editing.read().is_none(),
             onmounted: move |element| container.set(Some(element.data())),
             onkeydown: move |evt| {
                 let selected = *store.pane.selected.read();
@@ -100,8 +103,7 @@ pub fn Mindmap() -> Element {
                 }
             },
             svg {
-                width: "100%",
-                style: "height: calc(100vh - 2em); background:#fafafa;cursor:grab; user-select: none; z-index: 999",
+                class: "mindmap",
                 onresize: move |evt| {
                     match evt.data.get_border_box_size() {
                         Ok(sz) => {
@@ -200,10 +202,8 @@ pub fn Mindmap() -> Element {
 
                 MiniMap { store: store.clone(), svg_size: size }
             }
-            div {
-              class: "sidebar",
-              "test"
-            }
+        }
+            Sidebar { store: store.clone() }
         }
     }
 }

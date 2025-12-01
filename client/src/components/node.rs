@@ -10,7 +10,7 @@ const SELECTED_PADDING: f32 = 5.0;
 pub fn DraggedNode(id: Uuid, coords: (f32, f32)) -> Element {
     // Create motion values for scale and opacity
     let mut scale = use_motion(1.0f32);
-    let mut opacity = use_motion(1.0f32);
+    let mut opacity = use_motion(0.0f32);
     let animation = AnimationConfig::new(AnimationMode::Tween(Tween {
         duration: Duration::from_millis(100),
         ..Default::default()
@@ -19,7 +19,7 @@ pub fn DraggedNode(id: Uuid, coords: (f32, f32)) -> Element {
     // Animate scale and opacity
     use_effect(move || {
         scale.animate_to(0.5, animation.clone());
-        opacity.animate_to(0.5, animation.clone());
+        opacity.animate_to(0.8, animation.clone());
     });
 
     rsx! {

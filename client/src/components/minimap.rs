@@ -3,7 +3,7 @@ use dioxus::prelude::*;
 
 const MINIMAP_WIDTH: f32 = 100.0;
 const MINIMAP_HEIGHT: f32 = 70.0;
-const MINIMAP_MARGIN: f32 = 70.0;
+const MINIMAP_MARGIN: f32 = 30.0;
 const MINIMAP_PADDING: f32 = 10.0;
 
 #[component]
@@ -38,8 +38,8 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
     let mini_view_y = (viewport_top - min_y) * scale + MINIMAP_MARGIN;
     let mini_view_w = (viewport_right - viewport_left) * scale;
     let mini_view_h = (viewport_bottom - viewport_top) * scale;
-    let g_translate_x = (svg_w - MINIMAP_WIDTH) - 100.0;
-    let g_translate_y = (svg_h - MINIMAP_HEIGHT) - 100.0;
+    let g_translate_x = MINIMAP_MARGIN + MINIMAP_PADDING;
+    let g_translate_y = svg_h - MINIMAP_HEIGHT - MINIMAP_MARGIN - (2.0 * MINIMAP_PADDING);
 
     let mini_to_world =
         move |dx: f32, dy: f32| -> (f32, f32) { (dx / scale * t.scale, dy / scale * t.scale) };
@@ -59,7 +59,6 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
     rsx! {
         g {
             transform: "translate({g_translate_x},{g_translate_y})",
-
             onmousedown: move |evt| {
                 store.pane.minimap_dragging.set(true);
                 let coords = evt.element_coordinates();
@@ -88,8 +87,8 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
             },
             // Mini-map background
             rect {
-                x: "{MINIMAP_MARGIN - MINIMAP_PADDING}",
-                y: "{MINIMAP_MARGIN - MINIMAP_PADDING}",
+                x: 0,
+                y: 0,
                 width: "{MINIMAP_WIDTH + 2.0 * MINIMAP_PADDING}",
                 height: "{MINIMAP_HEIGHT + 2.0 * MINIMAP_PADDING}",
                 fill: "white",

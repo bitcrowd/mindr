@@ -35,7 +35,7 @@ dx serve
 - Writing some tests
 - Markdown export/import
 - Richtext node notes
-- Note node type 
+  - mermaid & gfm
 - Dealing with overlapping trees somehow? 
 - Animations
 
