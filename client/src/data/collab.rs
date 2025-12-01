@@ -42,6 +42,25 @@ pub enum NodeKind {
     Child { parent_id: Uuid, side: Side },
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum NodeProperty {
+    Text(String),
+    Color(String),
+    Estimate(f32),
+    Progress(u8),
+}
+
+impl NodeProperty {
+    pub fn to_yrs(&self) -> (&'static str, yrs::types::Any) {
+        match self {
+            NodeProperty::Text(s) => ("text", s.into()),
+            NodeProperty::Color(c) => ("color", c.into()),
+            NodeProperty::Estimate(e) => ("estimate", e.into()),
+            NodeProperty::Progress(p) => ("progress", p.into()),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Node {
     pub text: String,
@@ -186,10 +205,11 @@ impl CollabGraph {
         }
     }
 
-    pub fn update_node_text(&mut self, id: Uuid, text: String) {
+    pub fn update_node(&mut self, id: Uuid, property: NodeProperty) {
         let mut txn = self.doc.transact_mut();
         if let Some(Out::YMap(ymap)) = self.y_nodes.get(&txn, &id.to_string()) {
-            ymap.insert::<&str, Any>(&mut txn, "text", text.into());
+            let (key, value) = property.to_yrs();
+            ymap.insert(&mut txn, key, value);
         }
     }
 

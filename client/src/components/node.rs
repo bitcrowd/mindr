@@ -1,4 +1,4 @@
-use crate::data::Store;
+use crate::data::{NodeProperty, Store};
 use dioxus::prelude::*;
 use dioxus_motion::prelude::*;
 use std::rc::Rc;
@@ -181,7 +181,7 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                               display: block;
                               line-height: 1.2",
                             oninput: move |evt| {
-                                store.graph.update_node_text(id, evt.value().clone());
+                                store.graph.update_node(id, NodeProperty::Text(evt.value().clone()));
                             },
                         }
                     } else {

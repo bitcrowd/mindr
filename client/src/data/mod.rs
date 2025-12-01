@@ -15,6 +15,7 @@ pub mod collab;
 pub use collab::CollabGraph;
 pub use collab::Node;
 pub use collab::NodeKind;
+pub use collab::NodeProperty;
 
 pub mod connection;
 pub use connection::Connection;

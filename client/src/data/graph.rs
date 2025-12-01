@@ -1,5 +1,5 @@
 use crate::data::{CollabGraph, RelativeLocation, RenderedNode};
-use crate::data::{Node, NodeKind};
+use crate::data::{Node, NodeKind, NodeProperty};
 use dioxus::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
@@ -178,8 +178,8 @@ impl Graph {
         self.doc.write().add_node(node)
     }
 
-    pub fn update_node_text(&mut self, id: Uuid, new_text: String) {
-        self.doc.write().update_node_text(id, new_text)
+    pub fn update_node(&mut self, id: Uuid, property: NodeProperty) {
+        self.doc.write().update_node(id, property)
     }
 
     pub fn delete_node(&mut self, id: Uuid) {
