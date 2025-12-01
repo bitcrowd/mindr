@@ -42,16 +42,16 @@ pub enum NodeKind {
     Child { parent_id: Uuid, side: Side },
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum NodeProperty {
     Text(String),
     Color(String),
-    Estimate(f32),
-    Progress(u8),
+    Estimate(f64),
+    Progress(i64),
 }
 
 impl NodeProperty {
-    pub fn to_yrs(&self) -> (&'static str, yrs::types::Any) {
+    pub fn to_yrs(self) -> (&'static str, yrs::Any) {
         match self {
             NodeProperty::Text(s) => ("text", s.into()),
             NodeProperty::Color(c) => ("color", c.into()),
@@ -64,6 +64,9 @@ impl NodeProperty {
 #[derive(Clone)]
 pub struct Node {
     pub text: String,
+    pub estimate: Option<f64>,
+    pub progress: i64,
+    pub color: Option<String>,
     pub kind: NodeKind,
 }
 fn remove_uuids(order: ArrayRef, txn: &mut TransactionMut, ids: Vec<String>) {
@@ -83,6 +86,9 @@ impl Node {
         Node {
             text: "".to_string(),
             kind: NodeKind::Root { coords },
+            progress: 0,
+            color: None,
+            estimate: None,
         }
     }
 
@@ -90,33 +96,50 @@ impl Node {
         Node {
             text: "".to_string(),
             kind: NodeKind::Child { parent_id, side },
+            progress: 0,
+            color: None,
+            estimate: None,
         }
     }
     fn from_txn(txn: &TransactionMut, map: &MapRef) -> Self {
-        let text = String::try_from(map.get(txn, "text").unwrap()).unwrap();
-        if let Some(parent_id) = map.get(txn, "parent_id") {
+        let text = map
+            .get(txn, "text")
+            .and_then(|c| String::try_from(c).ok())
+            .unwrap();
+        let color = map.get(txn, "color").and_then(|c| String::try_from(c).ok());
+        let estimate = map.get(txn, "estimate").and_then(extract_f64);
+        let progress = map.get(txn, "progress").and_then(extract_i64).unwrap_or(0);
+        let kind = if let Some(parent_id) = map.get(txn, "parent_id") {
             let parent_id = Uuid::parse_str(&String::try_from(parent_id).unwrap()).unwrap();
             let side = String::try_from(map.get(txn, "side").unwrap())
                 .map(Side::from)
                 .unwrap();
-            Node {
-                text,
-                kind: NodeKind::Child { side, parent_id },
-            }
+            NodeKind::Child { side, parent_id }
         } else {
-            let x = extract_f64(&map.get(txn, "x").unwrap()).unwrap() as f32;
-            let y = extract_f64(&map.get(txn, "y").unwrap()).unwrap() as f32;
-            Node {
-                text,
-                kind: NodeKind::Root { coords: (x, y) },
-            }
+            let x = map.get(txn, "x").and_then(extract_f64).unwrap() as f32;
+            let y = map.get(txn, "y").and_then(extract_f64).unwrap() as f32;
+            NodeKind::Root { coords: (x, y) }
+        };
+        Node {
+            text,
+            color,
+            estimate,
+            kind,
+            progress,
         }
     }
 }
 
-fn extract_f64(out: &Out) -> Option<f64> {
+fn extract_f64(out: Out) -> Option<f64> {
     match out {
-        Out::Any(Any::Number(n)) => Some(*n),
+        Out::Any(Any::Number(n)) => Some(n),
+        _ => None,
+    }
+}
+
+fn extract_i64(out: Out) -> Option<i64> {
+    match out {
+        Out::Any(Any::Number(n)) => Some(n as i64),
         _ => None,
     }
 }

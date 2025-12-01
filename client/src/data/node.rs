@@ -1,5 +1,7 @@
 use uuid::Uuid;
 
+use super::DEFAULT_COLOR;
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum RelativeLocation {
     Top,
@@ -17,20 +19,33 @@ pub struct RenderedNode {
     pub y: f32,
     pub text: String,
     pub parent_id: Option<Uuid>,
-    pub color: &'static str,
+    pub color: Option<String>,
+    pub rendered_color: String,
+    pub estimate: Option<f64>,
+    pub progress: i64,
 }
 
 const TEXT_PADDING: f32 = 10.0;
-const DEFAULT_COLOR: &str = "#bdb2ff";
 impl RenderedNode {
-    pub fn new(id: Uuid, (x, y): (f32, f32), parent_id: Option<Uuid>, text: String) -> Self {
+    pub fn new(
+        id: Uuid,
+        (x, y): (f32, f32),
+        parent_id: Option<Uuid>,
+        text: String,
+        color: Option<String>,
+        estimate: Option<f64>,
+        progress: i64,
+    ) -> Self {
         Self {
             id,
             x,
             y,
             text,
             parent_id,
-            color: DEFAULT_COLOR,
+            color,
+            estimate,
+            progress,
+            rendered_color: DEFAULT_COLOR.to_string(),
         }
     }
 

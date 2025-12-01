@@ -22,9 +22,7 @@ dx serve
 
 - Server channels and client UI url selection
   - fallback to local state 
-- Estimations & sums 
-- Stable coloring + node coloring (colorpicker)
-  - maybe more colors + semi-random color picker
+- Estimations & progress rollup
 - Postgres persistance on the server
 - Better interactions 
   - Reorder nodes 

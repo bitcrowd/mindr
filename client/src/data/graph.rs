@@ -10,7 +10,7 @@ use super::collab::Side;
 const SPACING_X: f32 = 50.0; // horizontal gap between parent and child
 const SPACING_Y: f32 = 10.0; // vertical gap between siblings
 
-const COLORS: [&str; 8] = [
+pub const COLORS: [&str; 8] = [
     "#ffc6ff", "#ffadad", "#ffd6a5", "#fdffb6", "#caffbf", "#9bf6ff", "#a0c4ff", "#bdb2ff",
 ];
 const ORPHAN_COLOR: &str = "#999999";
@@ -96,9 +96,15 @@ impl Graph {
                 let sub = self.doc.write().observe_nodes(move |id, node| {
                     if let Some(node) = node {
                         let node = match node.kind {
-                            NodeKind::Root { coords } => {
-                                RenderedNode::new(id, coords, None, node.text)
-                            }
+                            NodeKind::Root { coords } => RenderedNode::new(
+                                id,
+                                coords,
+                                None,
+                                node.text,
+                                node.color,
+                                node.estimate,
+                                node.progress,
+                            ),
                             NodeKind::Child { parent_id, side } => {
                                 let offset = match side {
                                     Side::Left => -1f32,
@@ -109,7 +115,15 @@ impl Graph {
                                     .get(&parent_id)
                                     .map(|p| p.x + offset)
                                     .unwrap_or(0f32);
-                                RenderedNode::new(id, (x, 0f32), Some(parent_id), node.text)
+                                RenderedNode::new(
+                                    id,
+                                    (x, 0f32),
+                                    Some(parent_id),
+                                    node.text,
+                                    node.color,
+                                    node.estimate,
+                                    node.progress,
+                                )
                             }
                         };
                         nodes.write().insert(id, node);
@@ -375,7 +389,7 @@ impl UpdatedGraph {
                 let children = self.direct_children(root_id);
                 self.spread_children_vertically(root_id, &children, &heights, 1.0);
             }
-            self.visit_and_colorize_with(root_id, ORPHAN_COLOR);
+            self.visit_and_colorize_with(root_id, ORPHAN_COLOR.to_string());
         }
     }
 
@@ -383,13 +397,17 @@ impl UpdatedGraph {
         self.nodes.read().get(&id).cloned()
     }
 
-    fn visit_and_colorize_with(&mut self, node_id: Uuid, color: &'static str) {
-        for child_id in self.direct_children(node_id) {
-            self.visit_and_colorize_with(child_id, color);
-        }
-        if let Some(node) = self.nodes.write().get_mut(&node_id) {
+    fn visit_and_colorize_with(&mut self, node_id: Uuid, current_color: String) {
+        let color = if let Some(node) = self.nodes.write().get_mut(&node_id) {
             self.connected.insert(node.id);
-            node.color = color;
+            let color = node.color.clone().unwrap_or(current_color);
+            node.rendered_color = color.clone();
+            color
+        } else {
+            current_color
+        };
+        for child_id in self.direct_children(node_id) {
+            self.visit_and_colorize_with(child_id, color.clone());
         }
     }
 
@@ -397,7 +415,7 @@ impl UpdatedGraph {
         self.connected.insert(root_id);
         for (i, child_id) in self.direct_children(root_id).iter().enumerate() {
             let color = COLORS[i % COLORS.len()];
-            self.visit_and_colorize_with(*child_id, color);
+            self.visit_and_colorize_with(*child_id, color.to_string());
         }
     }
 

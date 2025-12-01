@@ -37,7 +37,7 @@ pub fn DraggedNode(id: Uuid, coords: (f32, f32)) -> Element {
 }
 
 #[component]
-fn RawChildNode(width: f32, height: f32, color: &'static str) -> Element {
+fn RawChildNode(width: f32, height: f32, color: String) -> Element {
     rsx! {
         rect {
             x: format!("{}", -width / 2.0),
@@ -54,7 +54,7 @@ fn RawChildNode(width: f32, height: f32, color: &'static str) -> Element {
 }
 
 #[component]
-fn RawRootNode(width: f32, height: f32, color: &'static str) -> Element {
+fn RawRootNode(width: f32, height: f32, color: String) -> Element {
     rsx! {
         rect {
             x: format!("{}", -width / 2.0),
@@ -84,11 +84,12 @@ fn RawRootNode(width: f32, height: f32, color: &'static str) -> Element {
 fn RawNode(node: crate::data::RenderedNode) -> Element {
     let width = node.width();
     let height = node.height();
+    let color = node.rendered_color.clone();
     rsx! {
         if node.parent_id.is_none() {
-            RawRootNode { width, height, color: node.color }
+            RawRootNode { width, height, color }
         } else {
-            RawChildNode { width, height, color: node.color }
+            RawChildNode { width, height, color }
         }
     }
 }

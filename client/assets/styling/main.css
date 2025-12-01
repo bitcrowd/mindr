@@ -30,7 +30,6 @@ html {
 }
 
 .sidebar {
-  min-height: 15%;
   border-top-left-radius: 20px;
   position: fixed;
   right: 0;
@@ -43,31 +42,163 @@ html {
   overflow-y: auto;
   max-height: 100%;
   width: 15%;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.sidebar-textarea {
-  width: 100%;
-  padding: 0.5rem 1rem;
+.sidebar__progress-input, .sidebar__estimate-input {
+  padding: 0.3rem 0.5rem;
   font-size: 1rem;
-  line-height: 1.3;
-  resize: none;
-  height: 150px;
   border: 1px solid #bdbdbd;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #fafafa;
-
+  color: #2c3e50;
   outline: none;
-  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  transition: border-color 0.25s, box-shadow 0.25s;
 }
 
-/* Hover */
-.sidebar-textarea:hover {
-  border-color: #9e9e9e;
+.sidebar__estimate-input {
+  width: 100%;
 }
 
-/* Focus state */
-.sidebar-textarea:focus {
-  border-color: #3f51b5;          /* Material Indigo */
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.15);
+.sidebar input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+}
+
+/* Hide default number controls (Chrome/Edge/Safari) */
+.sidebar input[type="number"]::-webkit-inner-spin-button,
+.sidebar input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.sidebar input:invalid {
+    border-color: #e74c3c;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.5);
+}
+
+.sidebar__section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar__icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.sidebar__estimate-buttons {
+
+   flex: 1 1 auto;
+  display: grid;
+  grid-template-rows: repeat(2, auto); /* 2 rows */
+  grid-auto-flow: column;
+  gap: 2px;
+}
+
+.sidebar__estimate-buttons button {
+    padding: 2px 4px;
+    font-size: 10px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.sidebar__estimate-buttons button:hover {
+    background-color: #e0e0e0;
+}
+
+.sidebar .sidebar__progress-input {
+  min-width: 48px;
+  width: 48px;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+/* Slider */
+.sidebar__progress-slider {
+   min-width: 0;
+   flex: 1 1 auto;
+    padding: 0;     /* IMPORTANT: prevents added extra height */
+    margin: 0;      /* prevents unexpected vertical offset */
+    -webkit-appearance: none; /* remove default styles for Chrome/Safari */
+    background: transparent;
+    cursor: pointer;
+}
+
+/* WebKit (Chrome, Safari, Edge) track */
+.sidebar__progress-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    background: #999;
+    border-radius: 4px;
+}
+
+/* WebKit thumb */
+.sidebar__progress-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    margin-top: -4px; /* center thumb on track */
+    cursor: pointer;
+}
+
+/* Firefox track */
+.sidebar__progress-slider::-moz-range-track {
+    height: 8px;
+    background: #999;
+    border-radius: 4px;
+}
+
+/* Firefox thumb */
+.sidebar__progress-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Optional: IE/Edge legacy track (if supporting old Edge/IE) */
+.sidebar__progress-slider::-ms-track {
+    width: 100%;
+    height: 8px;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+
+.sidebar__progress-slider::-ms-fill-lower {
+    background: #999;
+    border-radius: 4px;
+}
+
+.sidebar__progress-slider::-ms-fill-upper {
+    background: #999;
+    border-radius: 4px;
+}
+
+.sidebar__progress-slider::-ms-thumb {
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: 0; /* adjust if necessary */
+}
+
+.sidebar__color {
+  aspect-ratio: 1;
+  width: 24px;
+  border-radius: 50%;
 }

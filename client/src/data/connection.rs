@@ -34,14 +34,12 @@ impl Connection {
                     {
                         Ok(resp) => match resp.into_websocket().await {
                             Ok(ws) => ws,
-                            Err(e) => {
-                                dbg!("WebSocket upgrade failed:", e);
+                            Err(_) => {
                                 let _ = Delay::new(Duration::from_secs(3)).await;
                                 continue;
                             }
                         },
-                        Err(e) => {
-                            dbg!("WebSocket connect failed:", e);
+                        Err(_) => {
                             let _ = Delay::new(Duration::from_secs(3)).await;
                             continue;
                         }

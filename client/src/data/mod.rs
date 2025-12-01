@@ -19,3 +19,5 @@ pub use collab::NodeProperty;
 
 pub mod connection;
 pub use connection::Connection;
+
+pub const DEFAULT_COLOR: &str = "#bdb2ff";
