@@ -30,10 +30,19 @@ pub fn Sidebar(store: Store) -> Element {
                         class: "sidebar__estimate-input",
                         value: "{node.estimate.map(|e| e.to_string()).unwrap_or_default()}",
                         oninput: move |evt| {
-                            let normalized = evt.value().replace(',', ".");
-                            if float_regex.is_match(&normalized) {
-                                if let Ok(num) = normalized.parse::<f64>() {
-                                    store.graph.update_node(node.id, NodeProperty::Estimate(num))
+                            if evt.value().is_empty() {
+                                store.graph.update_node(node.id, NodeProperty::NoEstimate)
+                            } else {
+                                let normalized = evt.value().replace(',', ".");
+                                if float_regex.is_match(&normalized) {
+                                    if let Ok(num) = normalized.parse::<f64>() {
+                                        store
+                                            .graph
+                                            .update_node(
+                                                node.id,
+                                                NodeProperty::Estimate(num.min(10000.0).max(0.0)),
+                                            )
+                                    }
                                 }
                             }
                         },
@@ -54,12 +63,16 @@ pub fn Sidebar(store: Store) -> Element {
                     input {
                         r#type: "number",
                         value: "{node.progress}",
+                        min: "0",
+                        max: "100",
                         class: "sidebar__progress-input",
                         oninput: move |evt| {
                             if let Ok(num) = evt.value().parse::<i64>() {
                                 if 0 <= num && num <= 100 {
                                     store.graph.update_node(node.id, NodeProperty::Progress(num))
                                 }
+                            } else if evt.value().is_empty() {
+                                store.graph.update_node(node.id, NodeProperty::Progress(0))
                             }
                         },
                     }
@@ -88,7 +101,6 @@ pub fn Sidebar(store: Store) -> Element {
                         }
                     }
                 }
-            
             }
         }
     } else {

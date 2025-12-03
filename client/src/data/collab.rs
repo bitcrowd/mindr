@@ -47,19 +47,13 @@ pub enum NodeProperty {
     Text(String),
     Color(String),
     Estimate(f64),
+    NoEstimate,
     Progress(i64),
 }
 
-impl NodeProperty {
-    pub fn to_yrs(self) -> (&'static str, yrs::Any) {
-        match self {
-            NodeProperty::Text(s) => ("text", s.into()),
-            NodeProperty::Color(c) => ("color", c.into()),
-            NodeProperty::Estimate(e) => ("estimate", e.into()),
-            NodeProperty::Progress(p) => ("progress", p.into()),
-        }
-    }
-}
+// impl NodeProperty {
+//     pub fn to_yrs(self) -> (&'static str, yrs::Any) {}
+// }
 
 #[derive(Clone)]
 pub struct Node {
@@ -228,11 +222,26 @@ impl CollabGraph {
         }
     }
 
-    pub fn update_node(&mut self, id: Uuid, property: NodeProperty) {
+    pub fn update_node(&mut self, id: Uuid, prop: NodeProperty) {
         let mut txn = self.doc.transact_mut();
         if let Some(Out::YMap(ymap)) = self.y_nodes.get(&txn, &id.to_string()) {
-            let (key, value) = property.to_yrs();
-            ymap.insert(&mut txn, key, value);
+            match prop {
+                NodeProperty::Text(s) => {
+                    ymap.insert::<&'static str, yrs::Any>(&mut txn, "text", s.into());
+                }
+                NodeProperty::Color(c) => {
+                    ymap.insert::<&'static str, yrs::Any>(&mut txn, "color", c.into());
+                }
+                NodeProperty::Estimate(e) => {
+                    ymap.insert::<&'static str, yrs::Any>(&mut txn, "estimate", e.into());
+                }
+                NodeProperty::Progress(p) => {
+                    ymap.insert::<&'static str, yrs::Any>(&mut txn, "progress", p.into());
+                }
+                NodeProperty::NoEstimate => {
+                    ymap.remove(&mut txn, "estimate");
+                }
+            };
         }
     }
 

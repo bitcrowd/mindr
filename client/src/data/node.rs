@@ -1,6 +1,25 @@
+use super::DEFAULT_COLOR;
+use std::sync::OnceLock;
 use uuid::Uuid;
 
-use super::DEFAULT_COLOR;
+use fontdue::Font;
+static FONT_BYTES: &[u8] = include_bytes!("../../assets/fonts/Roboto-Light.ttf");
+static FONT: OnceLock<Font> = OnceLock::new();
+fn get_font() -> &'static Font {
+    FONT.get_or_init(|| {
+        Font::from_bytes(FONT_BYTES, fontdue::FontSettings::default()).expect("Failed to load font")
+    })
+}
+const FONT_SIZE: f32 = 14.0;
+
+pub fn measure_text_width(text: &str) -> f32 {
+    text.chars()
+        .map(|ch| {
+            let (metrics, _) = get_font().rasterize(ch, FONT_SIZE);
+            metrics.advance_width
+        })
+        .sum()
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum RelativeLocation {
@@ -11,7 +30,6 @@ pub enum RelativeLocation {
     Center,
 }
 
-const FONT_SIZE: f32 = 14.0;
 #[derive(Clone, PartialEq, Debug)]
 pub struct RenderedNode {
     pub id: Uuid,
@@ -22,6 +40,7 @@ pub struct RenderedNode {
     pub color: Option<String>,
     pub rendered_color: String,
     pub estimate: Option<f64>,
+    pub estimate_rollup: f64,
     pub progress: i64,
 }
 
@@ -45,13 +64,17 @@ impl RenderedNode {
             color,
             estimate,
             progress,
+            estimate_rollup: 0.0,
             rendered_color: DEFAULT_COLOR.to_string(),
         }
     }
 
     pub fn width(&self) -> f32 {
-        (self.text.lines().fold(0, |acc, line| acc.max(line.len())) as f32 * FONT_SIZE * 0.6)
-            .max(80.0)
+        (self
+            .text
+            .lines()
+            .fold(0f32, |acc, line| acc.max(measure_text_width(line))))
+        .max(80.0f32)
             + TEXT_PADDING * 2.0
     }
 

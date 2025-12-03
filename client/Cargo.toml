@@ -17,6 +17,7 @@ reqwest-websocket = "0.5.1"
 reqwest = "0.12.24"
 regex = "1.12.2"
 dioxus-free-icons = { version = "0.9", features = ["lucide"] }
+fontdue = "0.9.3"
 
 [features]
 default = ["desktop"]

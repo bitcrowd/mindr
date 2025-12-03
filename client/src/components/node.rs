@@ -94,6 +94,56 @@ fn RawNode(node: crate::data::RenderedNode) -> Element {
     }
 }
 
+const ESTIMATE_FONT_SIZE: f32 = 11f32;
+const ESTIMATE_PADDING: f32 = 4f32;
+const ESTIMATE_ICON_SIZE: f32 = 12.0f32;
+const ESTIMATE_ICON_SPACING: f32 = 2.0f32;
+#[component]
+pub fn Estimate(estimate: f64) -> Element {
+    let approx_char_width = ESTIMATE_FONT_SIZE * 0.6;
+    let text = format!("{:.2}", estimate)
+        .trim_end_matches('0')
+        .trim_end_matches('.')
+        .to_string();
+    let text_width = text.len() as f32 * approx_char_width;
+
+    let width = text_width + ESTIMATE_PADDING * 2.0 + ESTIMATE_ICON_SIZE + ESTIMATE_ICON_SPACING;
+    let height = ESTIMATE_FONT_SIZE + ESTIMATE_PADDING * 2.0;
+    let radius = height / 2.0;
+
+    rsx! {
+            rect {
+            x: "-{width / 2.0}",
+            y: "-{height / 2.0}",
+            width: "{width}",
+            height: "{height}",
+            rx: "{radius}",
+            ry: "{radius}",
+            fill: "#2c3e50",
+            stroke: "#444",
+            stroke_width: "0",
+        }
+
+        text {
+            x: "{(ESTIMATE_ICON_SIZE + ESTIMATE_ICON_SPACING) / 2.0}",
+            y: "1",
+            fill: "#fff",
+            font_size: "{ESTIMATE_FONT_SIZE}",
+            text_anchor: "middle",
+            dominant_baseline: "middle",
+            font_family: "sans-serif",
+            "{text}"
+        }
+        g {
+        transform: format!("translate({},{}), scale(0.5)", -(width / 2.0) + ESTIMATE_ICON_SPACING + 2.0, -ESTIMATE_ICON_SIZE/2.0),
+        fill: "none", stroke: "#fff", stroke_width: "2", stroke_linecap:"round", stroke_linejoin: "round",
+        path { d: "M12 6v6l4 2" }
+        circle { cx: "12", cy: "12", r:"10" }
+      }
+
+    }
+}
+
 #[component]
 pub fn Node(id: Uuid, store: Store) -> Element {
     let node = store.graph.get_node(id).unwrap();
@@ -125,16 +175,6 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                 id: "{node.id}",
                 RawNode { node: node.clone() }
 
-                if *store.pane.editing.read() == Some(id) {
-                    circle {
-                        cx: format!("{}", width / 2.0),
-                        cy: format!("{}", height / 2.0),
-                        r: "10",
-                        fill: "red",
-                        stroke: "black",
-                    }
-                }
-
                 if *store.pane.selected.read() == Some(id) {
                     rect {
                         x: format!("{}", (-width / 2.0) - SELECTED_PADDING),
@@ -149,6 +189,13 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                         "stroke-dasharray": "4",
                     }
                 }
+
+                if node.estimate_rollup > 0.0 {
+                    g { transform: format!("translate({},{})", 0, node.height() / 2.0 + 3.0),
+                        Estimate { estimate: node.estimate_rollup }
+                    }
+                }
+
                 foreignObject {
                     x: format!("{}", -width / 2.0),
                     y: format!("{}", -height / 2.0),
@@ -167,9 +214,9 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                             tabindex: -1,
                             style: "
                               user-select: none;
-                              padding-top: 8px;
-                              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                              padding-bottom: 10px;
+                              margin: 0px 10px;
+                              padding: 9px 0px;
+                              font-family: inherit;
                               width: 100%;
                               height: 100%;
                               outline:none;
@@ -177,7 +224,6 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                               border: none;
                               resize:none;
                               overflow:hidden;
-                              text-align: center;
                               font-size: {font_size}px;
                               display: block;
                               line-height: 1.2",
