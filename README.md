@@ -3,20 +3,28 @@
 ## Run client in web 
 
 ``` bash
+cd client
 dx serve --platform web --features web
 ```
 
 ## Run client in desktop
 
 ``` bash
+cd client
 dx serve --platform desktop --features desktop
 ```
 or simply 
 
 ``` bash
+cd client
 dx serve
 ```
+## Run the server 
 
+```
+cd server
+cargo run
+```
 
 ## Roadmap
 
