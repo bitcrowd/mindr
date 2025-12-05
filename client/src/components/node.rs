@@ -112,7 +112,7 @@ pub fn Estimate(estimate: f64) -> Element {
     let radius = height / 2.0;
 
     rsx! {
-            rect {
+        rect {
             x: "-{width / 2.0}",
             y: "-{height / 2.0}",
             width: "{width}",
@@ -135,12 +135,19 @@ pub fn Estimate(estimate: f64) -> Element {
             "{text}"
         }
         g {
-        transform: format!("translate({},{}), scale(0.5)", -(width / 2.0) + ESTIMATE_ICON_SPACING + 2.0, -ESTIMATE_ICON_SIZE/2.0),
-        fill: "none", stroke: "#fff", stroke_width: "2", stroke_linecap:"round", stroke_linejoin: "round",
-        path { d: "M12 6v6l4 2" }
-        circle { cx: "12", cy: "12", r:"10" }
-      }
-
+            transform: format!(
+                "translate({},{}), scale(0.5)",
+                -(width / 2.0) + ESTIMATE_ICON_SPACING + 2.0,
+                -ESTIMATE_ICON_SIZE / 2.0,
+            ),
+            fill: "none",
+            stroke: "#fff",
+            stroke_width: "2",
+            stroke_linecap: "round",
+            stroke_linejoin: "round",
+            path { d: "M12 6v6l4 2" }
+            circle { cx: "12", cy: "12", r: "10" }
+        }
     }
 }
 

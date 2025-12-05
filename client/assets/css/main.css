@@ -1,19 +1,18 @@
-
 body {
-    background-color: #0f1116;
-    color: #ffffff;
-    font-family: 'Roboto Light';
-    margin: 0;
+  background-color: #0f1116;
+  color: #ffffff;
+  font-family: "Roboto Light";
+  margin: 0;
 }
 
 html {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 .wrapper {
@@ -21,11 +20,10 @@ html {
   display: flex;
 }
 
-
 .mindmap {
   flex: 1;
-  background:#fafafa;
-  cursor:grab;
+  background: #fafafa;
+  cursor: grab;
   user-select: none;
   z-index: 1;
 }
@@ -49,7 +47,8 @@ html {
   gap: 24px;
 }
 
-.sidebar__progress-input, .sidebar__estimate-input {
+.sidebar__progress-input,
+.sidebar__estimate-input {
   padding: 0.3rem 0.5rem;
   font-size: 1rem;
   border: 1px solid #34495e;
@@ -57,7 +56,9 @@ html {
   background-color: #566573;
   color: #fff;
   outline: none;
-  transition: border-color 0.25s, box-shadow 0.25s;
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s;
 }
 
 .sidebar__estimate-input {
@@ -76,7 +77,7 @@ html {
 }
 
 .sidebar input:invalid {
-    border-color: #e74c3c;
+  border-color: #e74c3c;
   background-color: #c0392b;
 }
 
@@ -94,7 +95,7 @@ html {
 }
 
 .sidebar__estimate-buttons {
-   flex: 1 1 auto;
+  flex: 1 1 auto;
   display: grid;
   grid-template-rows: repeat(2, auto); /* 2 rows */
   grid-auto-flow: column;
@@ -102,18 +103,18 @@ html {
 }
 
 .sidebar__estimate-buttons button {
-    padding: 2px 8px;
-    font-size: 14px;
-    cursor: pointer;
+  padding: 2px 8px;
+  font-size: 14px;
+  cursor: pointer;
   border: 1px solid #34495e;
   background-color: #566573;
-    color: #fff;
-    border-radius: 4px;
-    transition: background-color 0.2s;
+  color: #fff;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
 .sidebar__estimate-buttons button:hover {
-    background-color: #e0e0e0;
+  background-color: #e0e0e0;
 }
 
 .sidebar .sidebar__progress-input {
@@ -125,76 +126,76 @@ html {
 
 /* Slider */
 .sidebar__progress-slider {
-   min-width: 0;
-   flex: 1 1 auto;
-    padding: 0;     /* IMPORTANT: prevents added extra height */
-    margin: 0;      /* prevents unexpected vertical offset */
-    -webkit-appearance: none; /* remove default styles for Chrome/Safari */
-    background: transparent;
-    cursor: pointer;
+  min-width: 0;
+  flex: 1 1 auto;
+  padding: 0; /* IMPORTANT: prevents added extra height */
+  margin: 0; /* prevents unexpected vertical offset */
+  -webkit-appearance: none; /* remove default styles for Chrome/Safari */
+  background: transparent;
+  cursor: pointer;
 }
 
 /* WebKit (Chrome, Safari, Edge) track */
 .sidebar__progress-slider::-webkit-slider-runnable-track {
-    width: 100%;
-    height: 8px;
-    background: #999;
-    border-radius: 4px;
+  width: 100%;
+  height: 8px;
+  background: #999;
+  border-radius: 4px;
 }
 
 /* WebKit thumb */
 .sidebar__progress-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
-    background: #fff;
-    border-radius: 50%;
-    margin-top: -4px; /* center thumb on track */
-    cursor: pointer;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  margin-top: -4px; /* center thumb on track */
+  cursor: pointer;
 }
 
 /* Firefox track */
 .sidebar__progress-slider::-moz-range-track {
-    height: 8px;
-    background: #999;
-    border-radius: 4px;
+  height: 8px;
+  background: #999;
+  border-radius: 4px;
 }
 
 /* Firefox thumb */
 .sidebar__progress-slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: #fff;
-    border-radius: 50%;
-    cursor: pointer;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
 }
 
 /* Optional: IE/Edge legacy track (if supporting old Edge/IE) */
 .sidebar__progress-slider::-ms-track {
-    width: 100%;
-    height: 8px;
-    background: transparent;
-    border-color: transparent;
-    color: transparent;
+  width: 100%;
+  height: 8px;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
 }
 
 .sidebar__progress-slider::-ms-fill-lower {
-    background: #999;
-    border-radius: 4px;
+  background: #999;
+  border-radius: 4px;
 }
 
 .sidebar__progress-slider::-ms-fill-upper {
-    background: #999;
-    border-radius: 4px;
+  background: #999;
+  border-radius: 4px;
 }
 
 .sidebar__progress-slider::-ms-thumb {
-    width: 16px;
-    height: 16px;
-    background: #fff;
-    border-radius: 50%;
-    cursor: pointer;
-    margin-top: 0; /* adjust if necessary */
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-top: 0; /* adjust if necessary */
 }
 
 .sidebar__color {
