@@ -40,7 +40,7 @@ pub fn Sidebar(store: Store) -> Element {
                                             .graph
                                             .update_node(
                                                 node.id,
-                                                NodeProperty::Estimate(num.min(10000.0).max(0.0)),
+                                                NodeProperty::Estimate(num.clamp(0.0, 10000.0)),
                                             )
                                     }
                                 }
@@ -68,7 +68,7 @@ pub fn Sidebar(store: Store) -> Element {
                         class: "sidebar__progress-input",
                         oninput: move |evt| {
                             if let Ok(num) = evt.value().parse::<i64>() {
-                                if 0 <= num && num <= 100 {
+                                if (0..=100).contains(&num) {
                                     store.graph.update_node(node.id, NodeProperty::Progress(num))
                                 }
                             } else if evt.value().is_empty() {
@@ -97,7 +97,7 @@ pub fn Sidebar(store: Store) -> Element {
                         div {
                             class: "sidebar__color",
                             style: "background: {c};",
-                            onclick: move |evt| { store.graph.update_node(node.id, NodeProperty::Color(c.to_string())) },
+                            onclick: move |_| { store.graph.update_node(node.id, NodeProperty::Color(c.to_string())) },
                         }
                     }
                 }

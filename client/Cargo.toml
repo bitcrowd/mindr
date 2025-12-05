@@ -7,8 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dioxus = { version = "0.6.0", features = ["router", "fullstack"] }
-dioxus-motion = { version = "0.3.0", optional = true, default-features = false }
+dioxus = { version = "0.7.2", features = ["router", "fullstack"] }
 uuid = { version = "1.18.1", features = ["v4", "js"] }
 yrs = { version = "0.24" }
 wasm-timer = "0.2"
@@ -16,14 +15,14 @@ futures-util = "0.3.31"
 reqwest-websocket = "0.5.1"
 reqwest = "0.12.24"
 regex = "1.12.2"
-dioxus-free-icons = { version = "0.9", features = ["lucide"] }
+dioxus-free-icons = { version = "0.10.0", features = ["lucide"] }
 fontdue = "0.9.3"
 
 [features]
 default = ["desktop"]
-web = ["dioxus/web", "dioxus-motion/web"]
-desktop = ["dioxus/desktop", "dioxus-motion/desktop"]
-mobile = ["dioxus/mobile", "dioxus-motion/desktop"]
+web = ["dioxus/web"]
+desktop = ["dioxus/desktop"]
+mobile = ["dioxus/mobile"]
 
 [profile.wasm-dev]
 inherits = "dev"

@@ -17,6 +17,7 @@ pub struct DraggingNode {
     pub offset: (f32, f32),
     pub coords: (f32, f32),
     pub target: Option<(Uuid, RelativeLocation)>,
+    pub has_moved: bool,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -62,6 +63,7 @@ impl Pane {
             offset: (ox, oy),
             coords: (node.x, node.y),
             target: None,
+            has_moved: false,
         }))
     }
 
@@ -69,7 +71,21 @@ impl Pane {
         self.dragging_node.with_mut(|opt| {
             if let Some(node) = opt {
                 let (ox, oy) = node.offset;
-                node.coords = (x - ox, y - oy);
+                let new_x = x - ox;
+                let new_y = y - oy;
+
+                let dx = (new_x - node.coords.0).abs();
+                let dy = (new_y - node.coords.1).abs();
+
+                if !node.has_moved {
+                    if dx < 3.0 && dy < 3.0 {
+                        return;
+                    }
+
+                    node.has_moved = true;
+                }
+
+                node.coords = (new_x, new_y);
                 node.target = target;
             }
         });

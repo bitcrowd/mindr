@@ -29,7 +29,7 @@ pub fn Mindmap() -> Element {
                 if let Some(parent_id) = node.parent_id {
                     NodeLink { id: node.id, parent_id, store: store.clone() }
                 }
-                Node { id: node.id, store: store.clone(), key: node.id }
+                Node { id: node.id, store: store.clone() }
             },
         ));
     });
@@ -42,7 +42,7 @@ pub fn Mindmap() -> Element {
             div {
                 class: "wrapper",
                 tabindex: 0,
-                // autofocus: pane.editing.read().is_none(),
+                autofocus: pane.editing.read().is_none(),
                 onmounted: move |element| container.set(Some(element.data())),
                 onkeydown: move |evt| {
                     let selected = *store.pane.selected.read();
@@ -73,6 +73,7 @@ pub fn Mindmap() -> Element {
                                 pane.selected.set(Some(id));
                             }
                             evt.prevent_default();
+                            evt.stop_propagation();
                         }
                         Key::Escape => {
                             if pane.editing.read().is_none() {
@@ -163,6 +164,12 @@ pub fn Mindmap() -> Element {
                             pane.editing.set(None);
                             pane.selected.set(None);
                         }
+                        evt.stop_propagation();
+                        evt.prevent_default();
+                        if let Some(div) = &*container.read() {
+                            let _ = div.set_focus(true);
+                        }
+
                     },
                     ondoubleclick: move |evt| {
                         let coords = evt.element_coordinates();
@@ -182,21 +189,23 @@ pub fn Mindmap() -> Element {
                         }
 
                         if let Some(dragging_node) = *pane.dragging_node.read() {
-                            if let Some(node) = graph.get_node(dragging_node.id) {
-                                if node.parent_id.is_some() {
-                                    DraggedNode {
-                                        id: node.id,
-                                        coords: dragging_node.coords,
+                            if dragging_node.has_moved {
+                                if let Some(node) = graph.get_node(dragging_node.id) {
+                                    if node.parent_id.is_some() {
+                                        DraggedNode {
+                                            id: node.id,
+                                            coords: dragging_node.coords,
+                                        }
                                     }
-                                }
-                                if let Some((_, location)) = dragging_node.target {
-                                    g {
-                                        transform: format!(
-                                            "translate({},{})",
-                                            dragging_node.coords.0 + 8.0,
-                                            dragging_node.coords.1 - 8.0,
-                                        ),
-                                        LocationIndicator { location }
+                                    if let Some((_, location)) = dragging_node.target {
+                                        g {
+                                            transform: format!(
+                                                "translate({},{})",
+                                                dragging_node.coords.0 + 8.0,
+                                                dragging_node.coords.1 - 8.0,
+                                            ),
+                                            LocationIndicator { location }
+                                        }
                                     }
                                 }
                             }

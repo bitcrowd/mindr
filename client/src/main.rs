@@ -18,12 +18,7 @@ fn App() -> Element {
         document::Style {
             {
                 format!(
-                    "
-                                                                                            @font-face {{
-                                                                                              font-family: 'Roboto Light';
-                                                                                              src: url({}) format('truetype');
-                                                                                            }}
-                                                                                        ",
+                    " @font-face {{ font-family: 'Roboto Light'; src: url({}) format('truetype');}} ",
                     asset!("/assets/fonts/Roboto-Light.ttf"),
                 )
             }

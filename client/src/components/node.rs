@@ -1,6 +1,5 @@
 use crate::data::{NodeProperty, Store};
 use dioxus::prelude::*;
-use dioxus_motion::prelude::*;
 use std::rc::Rc;
 use uuid::Uuid;
 
@@ -8,29 +7,11 @@ const SELECTED_PADDING: f32 = 5.0;
 
 #[component]
 pub fn DraggedNode(id: Uuid, coords: (f32, f32)) -> Element {
-    // Create motion values for scale and opacity
-    let mut scale = use_motion(1.0f32);
-    let mut opacity = use_motion(0.0f32);
-    let animation = AnimationConfig::new(AnimationMode::Tween(Tween {
-        duration: Duration::from_millis(100),
-        ..Default::default()
-    }))
-    .with_delay(Duration::from_millis(50));
-    // Animate scale and opacity
-    use_effect(move || {
-        scale.animate_to(0.5, animation.clone());
-        opacity.animate_to(0.8, animation.clone());
-    });
-
     rsx! {
         g { transform: format!("translate({}, {})", coords.0, coords.1),
             r#use {
                 href: format!("#{id}"),
-                style: format!(
-                    "transform: scale({}); opacity: {};",
-                    scale.get_value(),
-                    opacity.get_value(),
-                ),
+                style: "transform: scale(0.5); opacity: 0.3;",
             }
         }
     }
