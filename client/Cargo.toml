@@ -10,13 +10,13 @@ edition = "2021"
 dioxus = { version = "0.7.2", features = ["router", "fullstack"] }
 uuid = { version = "1.18.1", features = ["v4", "js"] }
 yrs = { version = "0.24" }
-wasm-timer = "0.2"
 futures-util = "0.3.31"
 reqwest-websocket = "0.5.1"
 reqwest = "0.12.24"
 regex = "1.12.2"
 dioxus-free-icons = { version = "0.10.0", features = ["lucide"] }
 fontdue = "0.9.3"
+portable_async_sleep = "0.1.1"
 
 [features]
 default = ["desktop"]
