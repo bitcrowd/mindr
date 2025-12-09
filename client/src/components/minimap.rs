@@ -64,6 +64,7 @@ pub fn MiniMap(store: Store, svg_size: Signal<(f32, f32)>) -> Element {
                 let coords = evt.element_coordinates();
                 store.pane.minimap_drag_offset.set((coords.x as f32, coords.y as f32));
                 evt.stop_propagation();
+                evt.prevent_default();
                 let x = (coords.x as f32 - MINIMAP_MARGIN - g_translate_x) / scale + min_x;
                 let y = (coords.y as f32 - MINIMAP_MARGIN - g_translate_y) / scale + min_y;
                 let mut t_new = *store.pane.transform.read();
