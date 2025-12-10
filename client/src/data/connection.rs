@@ -39,7 +39,7 @@ impl Connection {
                                 continue;
                             }
                         },
-                        Err(e) => {
+                        Err(_) => {
                             let _ = async_sleep(Duration::from_secs(3)).await;
                             continue;
                         }

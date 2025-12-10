@@ -115,3 +115,155 @@ impl RenderedNode {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uuid::Uuid;
+
+    fn make_node(text: &str) -> RenderedNode {
+        RenderedNode::new(
+            Uuid::new_v4(),
+            (100.0, 100.0),
+            None,
+            text.to_string(),
+            None,
+            None,
+            0,
+        )
+    }
+
+    // -------------------------
+    // measure_text_width
+    // -------------------------
+    #[test]
+    fn test_measure_text_width_nonzero() {
+        let w = measure_text_width("Hello");
+        assert!(w > 0.0);
+    }
+
+    #[test]
+    fn test_measure_text_width_adds_more_for_longer_text() {
+        let w1 = measure_text_width("Hi");
+        let w2 = measure_text_width("Hello, world!");
+        assert!(w2 > w1);
+    }
+
+    // -------------------------
+    // width()
+    // -------------------------
+    #[test]
+    fn test_width_has_minimum() {
+        let node = make_node("Hi");
+        let w = node.width();
+
+        assert!(w >= 80.0, "Width should enforce minimum");
+        assert!(w > 80.0, "Width should include padding");
+    }
+
+    #[test]
+    fn test_width_multiline_takes_longest_line() {
+        let node = make_node("short\nthis is a much longer line\nmid");
+        let width = node.width();
+
+        let width_short = measure_text_width("short") + 20.0;
+        let width_long = measure_text_width("this is a much longer line") + 20.0;
+
+        assert!(width >= width_long);
+        assert!(width > width_short);
+    }
+
+    // -------------------------
+    // height()
+    // -------------------------
+    #[test]
+    fn test_height_single_line() {
+        let node = make_node("Hello");
+        let h = node.height();
+
+        let expected_min = FONT_SIZE + TEXT_PADDING * 2.0;
+        assert!(h >= expected_min);
+    }
+
+    #[test]
+    fn test_height_multiple_lines() {
+        let node1 = make_node("One line");
+        let node2 = make_node("Line 1\nLine 2");
+
+        assert!(node2.height() > node1.height());
+    }
+
+    #[test]
+    fn test_height_handles_trailing_newline() {
+        let node1 = make_node("Line 1\nLine 2");
+        let node2 = make_node("Line 1\nLine 2\n"); // Should count as 3 lines
+
+        assert!(node2.height() > node1.height());
+    }
+
+    // -------------------------
+    // on()
+    // -------------------------
+    #[test]
+    fn test_on_center_detection() {
+        let node = make_node("Center test");
+        let loc = node.on((100.0, 100.0));
+
+        assert_eq!(loc, Some(RelativeLocation::Center));
+    }
+
+    #[test]
+    fn test_on_outside_returns_none() {
+        let node = make_node("Test");
+        let loc = node.on((500.0, 500.0));
+
+        assert_eq!(loc, None);
+    }
+
+    #[test]
+    fn test_on_top_detection() {
+        let node = make_node("Test");
+        let h = node.height();
+        let loc = node.on((100.0, 100.0 - h / 2.0));
+
+        assert_eq!(loc, Some(RelativeLocation::Top));
+    }
+
+    #[test]
+    fn test_on_bottom_detection() {
+        let node = make_node("Test");
+        let h = node.height();
+        let loc = node.on((100.0, 100.0 + h / 2.0));
+
+        assert_eq!(loc, Some(RelativeLocation::Bottom));
+    }
+
+    #[test]
+    fn test_on_left_detection() {
+        let node = make_node("Test");
+        let w = node.width();
+        let loc = node.on((100.0 - w / 2.0, 100.0));
+
+        assert_eq!(loc, Some(RelativeLocation::Left));
+    }
+
+    #[test]
+    fn test_on_right_detection() {
+        let node = make_node("Test");
+        let w = node.width();
+        let loc = node.on((100.0 + w / 2.0, 100.0));
+
+        assert_eq!(loc, Some(RelativeLocation::Right));
+    }
+
+    #[test]
+    fn test_on_near_edge_still_detected_with_tolerance() {
+        let node = make_node("Test");
+        let w = node.width();
+
+        // Slightly outside exact edge, but within tolerance
+        let loc = node.on((100.0 + w / 2.0 + 8.0, 100.0));
+
+        assert_eq!(loc, Some(RelativeLocation::Right));
+    }
+}
