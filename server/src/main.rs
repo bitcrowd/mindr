@@ -85,16 +85,37 @@ async fn handle_socket(
 }
 
 fn init_db() -> Result<(), Error> {
-    let mut client = Client::connect("postgresql://postgres:postgres@localhost/mindr_dev", NoTls)?;
-    client.batch_execute(
-        "
-        CREATE TABLE IF NOT EXISTS documents (
-            id              SERIAL PRIMARY KEY,
-            channel         VARCHAR NOT NULL,
-            document        BYTEA NOT NULL
-        )
-    ",
-    )?;
+    println!("⛸️ Initializing the Postgres database...");
 
-    Ok(())
+    let connection: Result<Client, Error> =
+        Client::connect("postgresql://postgres:postgres@localhost/mindr_dev", NoTls);
+    match connection {
+        Ok(client) => {
+            return init_table(client);
+        }
+        Err(e) => {
+            println!("‼️ Could not connect to the database: {}", e);
+            std::process::exit(0)
+        }
+    }
+}
+
+const INIT_TABLE_QUERY: &str = "
+    CREATE TABLE IF NOT EXISTS documents (
+    id              SERIAL PRIMARY KEY,
+    channel         VARCHAR NOT NULL,
+    document        BYTEA NOT NULL
+)
+";
+fn init_table(mut client: Client) -> Result<(), Error> {
+    match client.batch_execute(INIT_TABLE_QUERY) {
+        Ok(_) => {
+            println!("✅ Database ready!");
+            Ok(())
+        }
+        Err(e) => {
+            println!("‼️ Could not create the table: {}", e);
+            std::process::exit(0)
+        }
+    }
 }
