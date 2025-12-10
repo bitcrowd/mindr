@@ -6,12 +6,13 @@ use axum::{
     response::IntoResponse,
     routing::get,
 };
+use postgres::{Client, Error, NoTls};
 use tokio::sync::broadcast;
 use yrs::updates::decoder::Decode;
 use yrs::{Doc, ReadTxn, StateVector, Transact, Update};
 
 #[tokio::main]
-async fn main() {
+async fn server() {
     tracing_subscriber::fmt::init();
 
     let doc = Arc::new(Mutex::new(Doc::new()));
@@ -25,6 +26,11 @@ async fn main() {
     tracing::info!("Server running on ws://0.0.0.0:9000/ws");
     let listener = tokio::net::TcpListener::bind("0.0.0.0:9000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+fn main() {
+    let _ = init_db();
+    server();
 }
 
 async fn ws_handler(
@@ -76,4 +82,19 @@ async fn handle_socket(
     }
 
     tracing::info!("Client disconnected");
+}
+
+fn init_db() -> Result<(), Error> {
+    let mut client = Client::connect("postgresql://postgres:postgres@localhost/mindr_dev", NoTls)?;
+    client.batch_execute(
+        "
+        CREATE TABLE IF NOT EXISTS documents (
+            id              SERIAL PRIMARY KEY,
+            channel         VARCHAR NOT NULL,
+            document        BYTEA NOT NULL
+        )
+    ",
+    )?;
+
+    Ok(())
 }

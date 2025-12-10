@@ -4,6 +4,15 @@
 
 - Install [rust](https://rust-lang.org/tools/install/)
 - Install [dioxus](https://dioxuslabs.com/learn/0.7/getting_started/#install-the-dioxus-cli)
+- Install PostgreSql
+
+## Database setup
+
+Open a `psql` shell and type:
+
+```
+CREATE DATABASE mindr_dev;
+```
 
 
 ## Run client in web
