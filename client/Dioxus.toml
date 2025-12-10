@@ -9,7 +9,7 @@ features = ["desktop"]
 [web.app]
 
 # HTML title tag content
-title = "orbitmind"
+title = "mindr"
 
 # include `assets` in web platform
 [web.resource]

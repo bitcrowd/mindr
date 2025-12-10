@@ -1,5 +1,5 @@
 [package]
-name = "orbitmind"
+name = "mindr"
 version = "0.1.0"
 authors = ["Andreas Knöpfle <andi@bitcrowd.net>"]
 edition = "2021"

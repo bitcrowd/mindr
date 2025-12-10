@@ -3148,6 +3148,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "mindr"
+version = "0.1.0"
+dependencies = [
+ "dioxus",
+ "dioxus-free-icons",
+ "fontdue",
+ "futures-util",
+ "portable_async_sleep",
+ "regex",
+ "reqwest",
+ "reqwest-websocket",
+ "uuid",
+ "yrs",
+]
+
+[[package]]
 name = "mindr-server"
 version = "0.1.0"
 dependencies = [
@@ -3522,22 +3538,6 @@ name = "option-ext"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
-
-[[package]]
-name = "orbitmind"
-version = "0.1.0"
-dependencies = [
- "dioxus",
- "dioxus-free-icons",
- "fontdue",
- "futures-util",
- "portable_async_sleep",
- "regex",
- "reqwest",
- "reqwest-websocket",
- "uuid",
- "yrs",
-]
 
 [[package]]
 name = "ordered-stream"
