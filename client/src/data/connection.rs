@@ -19,7 +19,7 @@ pub struct Connection {
 }
 
 impl Connection {
-    pub fn new(graph: Graph) -> Self {
+    pub fn new(graph: Graph, channel_id: String) -> Self {
         let doc = graph.get_doc();
         let coroutine = use_coroutine(move |mut rx: UnboundedReceiver<Message>| {
             let mut doc = doc;

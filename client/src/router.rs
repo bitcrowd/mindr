@@ -21,7 +21,33 @@ pub enum Route {
 #[component]
 fn Home() -> Element {
     rsx! {
-        document::Style {
+        default_style {}
+        h1 {
+            "Welcome! Create a mindmap by navigating to /channels/YOUR_CHANNEL_NAME"
+        }
+    }
+}
+
+#[component]
+fn Channel(channel_id: String) -> Element {
+    rsx! {
+        default_style {}
+        Mindmap { channel_id: "root" }
+    }
+}
+
+#[component]
+fn NotFound(any: String) -> Element {
+    // TODO: Return 404 status code
+    rsx! {
+        default_style {}
+        p { "Not found :(" }
+    }
+}
+
+fn default_style() -> Element {
+    rsx! {
+            document::Style {
             {
                 format!(
                     " @font-face {{ font-family: 'Roboto Light'; src: url({}) format('truetype');}} ",
@@ -31,17 +57,5 @@ fn Home() -> Element {
         }
         document::Link { rel: "icon", href: FAVICON }
         document::Link { rel: "stylesheet", href: MAIN_CSS }
-        Mindmap {}
     }
-}
-
-#[component]
-fn Channel(channel_id: String) -> Element {
-    rsx! { "Channel page for channel with id: {channel_id}" }
-}
-
-#[component]
-fn NotFound(any: String) -> Element {
-    // TODO: Return 404 status code
-    rsx! { "Not found :(" }
 }
