@@ -31,6 +31,8 @@ cargo run
 - Server channels and client UI url selection
   - fallback to local state 
 - Estimations & progress rollup
+- Disable/Enable branches
+- Show/Hide branches
 - Postgres persistance on the server
 - Better interactions 
   - Reorder nodes 
@@ -43,6 +45,10 @@ cargo run
 - Richtext node notes
   - mermaid & gfm
 - Dealing with overlapping trees somehow? 
+- Add action buttons for keyboard shortcuts
 - Animations
+- Version snapshots (to create different annotations)
+- Bundling
+- User auth for server?
 
 
