@@ -1,9 +1,9 @@
 use dioxus::prelude::*;
 use futures_util::{select, FutureExt, SinkExt, StreamExt};
+use portable_async_sleep::async_sleep;
 use reqwest::Client;
 use reqwest_websocket::RequestBuilderExt;
 use std::time::Duration;
-use wasm_timer::Delay;
 
 use crate::data::Graph;
 #[derive(Clone)]
@@ -35,12 +35,12 @@ impl Connection {
                         Ok(resp) => match resp.into_websocket().await {
                             Ok(ws) => ws,
                             Err(_) => {
-                                let _ = Delay::new(Duration::from_secs(3)).await;
+                                let _ = async_sleep(Duration::from_secs(3)).await;
                                 continue;
                             }
                         },
                         Err(_) => {
-                            let _ = Delay::new(Duration::from_secs(3)).await;
+                            let _ = async_sleep(Duration::from_secs(3)).await;
                             continue;
                         }
                     };
@@ -77,7 +77,7 @@ impl Connection {
                     }
 
                     dbg!("Disconnected, retrying...");
-                    let _ = Delay::new(Duration::from_secs(3)).await;
+                    let _ = async_sleep(Duration::from_secs(3)).await;
                 }
             }
         });
