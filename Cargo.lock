@@ -3148,6 +3148,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "mindr-server"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "yrs",
+]
+
+[[package]]
 name = "minicov"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3525,17 +3536,6 @@ dependencies = [
  "reqwest",
  "reqwest-websocket",
  "uuid",
- "yrs",
-]
-
-[[package]]
-name = "orbitmind-server"
-version = "0.1.0"
-dependencies = [
- "axum",
- "tokio",
- "tracing",
- "tracing-subscriber",
  "yrs",
 ]
 
