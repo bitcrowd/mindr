@@ -10,7 +10,7 @@
 
 ``` bash
 cd client
-dx serve --platform web --features web
+dx serve --platform web
 ```
 
 ## Run client in desktop
