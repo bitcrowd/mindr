@@ -21,17 +21,17 @@ pub enum Route {
 #[component]
 fn Home() -> Element {
     rsx! {
-       document::Style {
-           {
-               format!(
-                   " @font-face {{ font-family: 'Roboto Light'; src: url({}) format('truetype');}} ",
-                   asset!("/assets/fonts/Roboto-Light.ttf"),
-               )
-           }
-       }
-       document::Link { rel: "icon", href: FAVICON }
-       document::Link { rel: "stylesheet", href: MAIN_CSS }
-       Mindmap {},
+        document::Style {
+            {
+                format!(
+                    " @font-face {{ font-family: 'Roboto Light'; src: url({}) format('truetype');}} ",
+                    asset!("/assets/fonts/Roboto-Light.ttf"),
+                )
+            }
+        }
+        document::Link { rel: "icon", href: FAVICON }
+        document::Link { rel: "stylesheet", href: MAIN_CSS }
+        Mindmap {}
     }
 }
 

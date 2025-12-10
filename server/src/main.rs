@@ -87,9 +87,9 @@ async fn handle_socket(
 fn init_db() -> Result<(), Error> {
     println!("⛸️ Initializing the Postgres database...");
 
-    let connection: Result<Client, Error> =
+    let db_connection: Result<Client, Error> =
         Client::connect("postgresql://postgres:postgres@localhost/mindr_dev", NoTls);
-    match connection {
+    match db_connection {
         Ok(client) => {
             return init_table(client);
         }
