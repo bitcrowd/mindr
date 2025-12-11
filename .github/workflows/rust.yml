@@ -17,6 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - uses: cargo-bins/cargo-binstall@main
       - name: Install system packages
         run: |
           sudo apt update
@@ -32,7 +33,7 @@ jobs:
             librsvg2-dev \
             lld
       - name: Install dioxus cli
-        run: cargo install dioxus-cli
+        run: cargo binstall dioxus-cli --force
       - name: Build
         run: RUSTFLAGS="-D warnings" cargo build --all-targets --all-features
       - name: Cargo fmt
