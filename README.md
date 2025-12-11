@@ -17,7 +17,7 @@ dx serve --platform web
 
 ``` bash
 cd client
-dx serve --platform desktop --features desktop
+dx serve --platform desktop
 ```
 or simply
 
