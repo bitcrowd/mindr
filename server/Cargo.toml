@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 axum = { version = "0.8.6", features = ["ws"] }
 tokio = { version = "1.42", features = ["full"] }
+postgres = "0.19.12"
 yrs = { version = "0.24.0" }
 
 # Logging (optional, helpful)

@@ -10,12 +10,12 @@ pub struct Store {
 }
 
 impl Store {
-    pub fn new() -> Self {
+    pub fn new(channel_id: String) -> Self {
         let graph = Graph::new();
         Self {
             graph,
             pane: Pane::new(),
-            connection: Connection::new(graph),
+            connection: Connection::new(graph, channel_id),
         }
     }
 }
