@@ -21,3 +21,5 @@ pub mod connection;
 pub use connection::Connection;
 
 pub const DEFAULT_COLOR: &str = "#bdb2ff";
+pub const FONT_SIZE: f32 = 14.0;
+pub const TEXT_PADDING: f32 = 10.0;

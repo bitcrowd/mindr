@@ -1,4 +1,4 @@
-use super::DEFAULT_COLOR;
+use super::{DEFAULT_COLOR, FONT_SIZE, TEXT_PADDING};
 use std::sync::OnceLock;
 use uuid::Uuid;
 
@@ -10,7 +10,6 @@ fn get_font() -> &'static Font {
         Font::from_bytes(FONT_BYTES, fontdue::FontSettings::default()).expect("Failed to load font")
     })
 }
-const FONT_SIZE: f32 = 14.0;
 
 pub fn measure_text_width(text: &str) -> f32 {
     text.chars()
@@ -19,6 +18,14 @@ pub fn measure_text_width(text: &str) -> f32 {
             metrics.advance_width
         })
         .sum()
+}
+
+pub fn measure_line_height() -> f32 {
+    get_font()
+        .horizontal_line_metrics(FONT_SIZE)
+        .unwrap()
+        .new_line_size
+        .ceil()
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -44,7 +51,6 @@ pub struct RenderedNode {
     pub progress: i64,
 }
 
-const TEXT_PADDING: f32 = 10.0;
 impl RenderedNode {
     pub fn new(
         id: Uuid,
@@ -85,7 +91,7 @@ impl RenderedNode {
             self.text.lines().count()
         }
         .max(1);
-        FONT_SIZE * lines as f32 + FONT_SIZE * 0.2 * (lines as f32 - 1.0) + TEXT_PADDING * 2.0
+        lines as f32 * measure_line_height() + TEXT_PADDING * 2.0
     }
 
     pub fn font_size(&self) -> f32 {
