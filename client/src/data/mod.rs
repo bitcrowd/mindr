@@ -1,5 +1,8 @@
+pub mod common;
+pub use common::RelativeLocation;
+pub use common::Side;
+
 pub mod node;
-pub use node::RelativeLocation;
 pub use node::RenderedNode;
 
 pub mod graph;
