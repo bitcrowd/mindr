@@ -1,11 +1,9 @@
-use crate::data::{CollabGraph, RelativeLocation, RenderedNode};
-use crate::data::{Node, NodeKind, NodeProperty};
+use super::{CollabGraph, Node, NodeKind, NodeProperty, RelativeLocation, RenderedNode, Side};
 use dioxus::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
-use super::collab::Side;
 use super::DEFAULT_COLOR;
 
 const SPACING_X: f32 = 50.0; // horizontal gap between parent and child
@@ -103,29 +101,20 @@ impl Graph {
                                 None,
                                 node.text,
                                 node.color,
+                                None,
                                 node.estimate,
                                 node.progress,
                             ),
-                            NodeKind::Child { parent_id, side } => {
-                                let offset = match side {
-                                    Side::Left => -1f32,
-                                    _ => 1f32,
-                                };
-                                let x = nodes
-                                    .read()
-                                    .get(&parent_id)
-                                    .map(|p| p.x + offset)
-                                    .unwrap_or(0f32);
-                                RenderedNode::new(
-                                    id,
-                                    (x, 0f32),
-                                    Some(parent_id),
-                                    node.text,
-                                    node.color,
-                                    node.estimate,
-                                    node.progress,
-                                )
-                            }
+                            NodeKind::Child { parent_id, side } => RenderedNode::new(
+                                id,
+                                (0.0, 0f32),
+                                Some(parent_id),
+                                node.text,
+                                node.color,
+                                Some(side),
+                                node.estimate,
+                                node.progress,
+                            ),
                         };
                         nodes.write().insert(id, node);
                     } else {
@@ -475,7 +464,6 @@ impl UpdatedGraph {
         if children.is_empty() {
             return;
         }
-
         if let Some(parent) = self.get_node(parent_id) {
             let total_height: f32 = children.iter().map(|id| heights[id]).sum::<f32>()
                 + SPACING_Y * (children.len() as f32 - 1.0);
@@ -502,17 +490,13 @@ impl UpdatedGraph {
     }
 
     fn assign_positions(&mut self, root_id: Uuid, heights: &HashMap<Uuid, f32>) {
-        if let Some(root) = self.get_node(root_id) {
-            let root_x = root.x;
+        let children = self.direct_children(root_id);
 
-            let children = self.direct_children(root_id);
+        let (left, right): (Vec<_>, Vec<_>) = children
+            .into_iter()
+            .partition(|&id| self.get_node(id).unwrap().side.unwrap() == Side::Left);
 
-            let (left, right): (Vec<_>, Vec<_>) = children
-                .into_iter()
-                .partition(|&id| self.get_node(id).unwrap().x < root_x);
-
-            self.spread_children_vertically(root_id, &left, heights, -1.0);
-            self.spread_children_vertically(root_id, &right, heights, 1.0);
-        }
+        self.spread_children_vertically(root_id, &left, heights, -1.0);
+        self.spread_children_vertically(root_id, &right, heights, 1.0);
     }
 }

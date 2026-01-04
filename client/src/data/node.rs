@@ -1,4 +1,4 @@
-use super::{DEFAULT_COLOR, FONT_SIZE, TEXT_PADDING};
+use super::{RelativeLocation, Side, DEFAULT_COLOR, FONT_SIZE, TEXT_PADDING};
 use std::sync::OnceLock;
 use uuid::Uuid;
 
@@ -28,15 +28,6 @@ pub fn measure_line_height() -> f32 {
         .ceil()
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum RelativeLocation {
-    Top,
-    Bottom,
-    Left,
-    Right,
-    Center,
-}
-
 #[derive(Clone, PartialEq, Debug)]
 pub struct RenderedNode {
     pub id: Uuid,
@@ -45,6 +36,7 @@ pub struct RenderedNode {
     pub text: String,
     pub parent_id: Option<Uuid>,
     pub color: Option<String>,
+    pub side: Option<Side>,
     pub rendered_color: String,
     pub estimate: Option<f64>,
     pub estimate_rollup: f64,
@@ -58,6 +50,7 @@ impl RenderedNode {
         parent_id: Option<Uuid>,
         text: String,
         color: Option<String>,
+        side: Option<Side>,
         estimate: Option<f64>,
         progress: i64,
     ) -> Self {
@@ -70,6 +63,7 @@ impl RenderedNode {
             color,
             estimate,
             progress,
+            side,
             estimate_rollup: 0.0,
             rendered_color: DEFAULT_COLOR.to_string(),
         }
@@ -133,6 +127,7 @@ mod tests {
             (100.0, 100.0),
             None,
             text.to_string(),
+            None,
             None,
             None,
             0,

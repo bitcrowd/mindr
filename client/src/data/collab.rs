@@ -1,3 +1,4 @@
+use super::Side;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 use yrs::updates::decoder::Decode;
@@ -13,11 +14,6 @@ pub struct CollabGraph {
     pub y_order: ArrayRef,
 }
 
-#[derive(Copy, Clone)]
-pub enum Side {
-    Left,
-    Right,
-}
 impl From<Side> for Any {
     fn from(side: Side) -> Self {
         match side {
