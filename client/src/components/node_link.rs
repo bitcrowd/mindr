@@ -36,26 +36,31 @@ pub fn RedCross(x: f32, y: f32) -> Element {
 #[component]
 pub fn NodeLink(id: Uuid, parent_id: Uuid, store: Store) -> Element {
     let graph = store.graph;
+
     let Some(child) = graph.get_node(id) else {
         return rsx! {};
     };
 
+    let (child_x, child_y) = store.pane.coords(&child);
+
     let Some(parent) = graph.get_node(parent_id) else {
-        let x = child.x - child.width() / 2.0;
-        let y = child.y;
+        let x = child_x - child.width() / 2.0;
+        let y = child_y;
         return rsx! {
             RedCross { x, y }
         };
     };
 
+    let (parent_x, parent_y) = store.pane.coords(&parent);
+
     let is_right = child.x > parent.x;
     let side_mult = if is_right { 1.0 } else { -1.0 };
 
     // Parent/child edges
-    let start_x = parent.x + side_mult * parent.width() / 2.0;
-    let start_y = parent.y;
-    let end_x = child.x - side_mult * child.width() / 2.0;
-    let end_y = child.y;
+    let start_x = parent_x + side_mult * parent.width() / 2.0;
+    let start_y = parent_y;
+    let end_x = child_x - side_mult * child.width() / 2.0;
+    let end_y = child_y;
 
     // Horizontal offsets
     let start_offset = 20.0 * side_mult;

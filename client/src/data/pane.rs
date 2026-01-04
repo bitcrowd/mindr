@@ -1,3 +1,5 @@
+use std::f32;
+
 use dioxus::prelude::*;
 use uuid::Uuid;
 
@@ -53,6 +55,15 @@ impl Pane {
     pub fn transform(&self, x: f32, y: f32) -> (f32, f32) {
         let t = *self.transform.read();
         (x - t.pan_x, y - t.pan_y)
+    }
+
+    pub fn coords(&self, node: &RenderedNode) -> (f32, f32) {
+        if let Some(dragging_node) = *self.dragging_node.read() {
+            if dragging_node.id == node.id {
+                return dragging_node.coords;
+            }
+        }
+        (node.x, node.y)
     }
 
     pub fn start_drag(&mut self, node: &RenderedNode, (x, y): (f32, f32)) {

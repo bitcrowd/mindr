@@ -225,6 +225,14 @@ impl Graph {
         }
     }
 
+    pub fn move_root_node(&mut self, id: Uuid, coords: (f32, f32)) {
+        if let Some(node) = self.get_node(id) {
+            if node.parent_id.is_none() {
+                self.doc.write().update_node_coords(id, coords);
+            }
+        }
+    }
+
     pub fn move_node_into(
         &mut self,
         id: Uuid,
@@ -232,9 +240,7 @@ impl Graph {
         target: Option<(Uuid, RelativeLocation)>,
     ) {
         if let Some((target_id, location)) = target {
-            if self.get_root(target_id) == id {
-                self.move_node(id, coords);
-            } else {
+            if !self.ancestors(target_id).contains(&id) {
                 let side = match location {
                     RelativeLocation::Left => Side::Left,
                     RelativeLocation::Right => Side::Right,
@@ -263,6 +269,22 @@ impl Graph {
                 }
             })
             .unwrap_or(id)
+    }
+
+    pub fn ancestors(&self, id: Uuid) -> Vec<Uuid> {
+        let mut result = match self.get_node(id) {
+            Some(node) => {
+                if let Some(parent_id) = node.parent_id {
+                    self.ancestors(parent_id)
+                } else {
+                    Vec::new()
+                }
+            }
+            None => Vec::new(),
+        };
+
+        result.push(id);
+        result
     }
 
     pub fn on(&self, coords: (f32, f32)) -> Option<(Uuid, RelativeLocation)> {

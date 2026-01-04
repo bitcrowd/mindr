@@ -7,15 +7,6 @@ use uuid::Uuid;
 const SELECTED_PADDING: f32 = 5.0;
 
 #[component]
-pub fn DraggedNode(id: Uuid, coords: (f32, f32)) -> Element {
-    rsx! {
-        g { transform: format!("translate({}, {})", coords.0, coords.1),
-            r#use { href: format!("#{id}") }
-        }
-    }
-}
-
-#[component]
 fn RawChildNode(width: f32, height: f32, color: String) -> Element {
     rsx! {
         rect {
@@ -153,6 +144,7 @@ pub fn Node(id: Uuid, store: Store) -> Element {
     let height = node.height();
     let font_size = node.font_size();
     let is_editing = *store.pane.editing.read() == Some(id);
+    let (node_x, node_y) = store.pane.coords(&node);
     let mut input_element: Signal<Option<Rc<MountedData>>> = use_signal(|| None);
     use_effect(move || {
         if let Some(input) = &*input_element.read() {
@@ -161,7 +153,7 @@ pub fn Node(id: Uuid, store: Store) -> Element {
     });
 
     rsx! {
-        g { transform: format!("translate({},{})", node.x, node.y),
+        g { transform: format!("translate({},{})", node_x, node_y),
             g {
                 onmousedown: move |evt| {
                     if is_editing {

@@ -1,4 +1,3 @@
-use crate::components::DraggedNode;
 use crate::components::LocationIndicator;
 use crate::components::MiniMap;
 use crate::components::Node;
@@ -29,13 +28,18 @@ pub fn Mindmap() -> Element {
                 if let Some(parent_id) = node.parent_id {
                     NodeLink { id: node.id, parent_id, store: store.clone() }
                 }
+
                 Node { id: node.id, store: store.clone() }
             },
         ));
     });
     nodes.sort_by_key(|(id, _)| {
         let root_id = graph.get_root(*id);
-        (dragging_id != Some(root_id), root_id)
+        (
+            dragging_id == Some(*id),
+            dragging_id != Some(root_id),
+            root_id,
+        )
     });
     rsx! {
         div {
@@ -140,7 +144,7 @@ pub fn Mindmap() -> Element {
                         if let Some(dragging_node) = dragging_node {
                             let target = graph.on_other(dragging_node.id, svg_coords);
                             pane.update_drag(svg_coords, target);
-                            graph.move_node(dragging_node.id, dragging_node.coords);
+                            graph.move_root_node(dragging_node.id, dragging_node.coords);
                         }
                         if *pane.panning.read() {
                             let (start_x, start_y) = *pane.pan_offset.read();
@@ -190,22 +194,14 @@ pub fn Mindmap() -> Element {
 
                         if let Some(dragging_node) = *pane.dragging_node.read() {
                             if dragging_node.has_moved {
-                                if let Some(node) = graph.get_node(dragging_node.id) {
-                                    if node.parent_id.is_some() {
-                                        DraggedNode {
-                                            id: node.id,
-                                            coords: dragging_node.coords,
-                                        }
-                                    }
-                                    if let Some((_, location)) = dragging_node.target {
-                                        g {
-                                            transform: format!(
-                                                "translate({},{})",
-                                                dragging_node.coords.0 + 8.0,
-                                                dragging_node.coords.1 - 8.0,
-                                            ),
-                                            LocationIndicator { location }
-                                        }
+                                if let Some((_, location)) = dragging_node.target {
+                                    g {
+                                        transform: format!(
+                                            "translate({},{})",
+                                            dragging_node.coords.0 + 8.0,
+                                            dragging_node.coords.1 - 8.0,
+                                        ),
+                                        LocationIndicator { location }
                                     }
                                 }
                             }
