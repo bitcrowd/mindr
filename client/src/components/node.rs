@@ -1,4 +1,5 @@
-use crate::data::{NodeProperty, Store};
+use crate::data::node::measure_line_height;
+use crate::data::{NodeProperty, Store, FONT_SIZE, TEXT_PADDING};
 use dioxus::prelude::*;
 use std::rc::Rc;
 use uuid::Uuid;
@@ -9,10 +10,7 @@ const SELECTED_PADDING: f32 = 5.0;
 pub fn DraggedNode(id: Uuid, coords: (f32, f32)) -> Element {
     rsx! {
         g { transform: format!("translate({}, {})", coords.0, coords.1),
-            r#use {
-                href: format!("#{id}"),
-                style: "transform: scale(0.5); opacity: 0.3;",
-            }
+            r#use { href: format!("#{id}") }
         }
     }
 }
@@ -57,6 +55,22 @@ fn RawRootNode(width: f32, height: f32, color: String) -> Element {
             fill: "{color}",
             stroke: "black",
             "stroke-width": "2",
+        }
+    }
+}
+
+#[component]
+fn NodeLabel(label: String) -> Element {
+    rsx! {
+        for (index , line) in label.lines().enumerate() {
+            text {
+                y: index as f32 * measure_line_height() + TEXT_PADDING,
+                x: TEXT_PADDING,
+                text_anchor: "start",
+                dominant_baseline: "text-before-edge",
+                font_size: FONT_SIZE,
+                "{line}"
+            }
         }
     }
 }
@@ -184,14 +198,13 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                     }
                 }
 
-                foreignObject {
-                    x: format!("{}", -width / 2.0),
-                    y: format!("{}", -height / 2.0),
-                    width: format!("{}", width),
-                    height: format!("{}", height),
-                    if *store.pane.editing.read() == Some(node.id) {
+                if *store.pane.editing.read() == Some(node.id) {
+                    foreignObject {
+                        x: format!("{}", -width / 2.0),
+                        y: format!("{}", -height / 2.0),
+                        width: format!("{}", width),
+                        height: format!("{}", height),
                         textarea {
-                            style: if store.pane.dragging_node.read().is_some() { "pointer-events: none;" } else { "" },
                             key: "{id}-textarea",
                             onmounted: move |element| input_element.set(Some(element.data())),
                             value: "{node.text}",
@@ -202,11 +215,11 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                             tabindex: -1,
                             style: "
                               user-select: none;
-                              margin: 0px 10px;
-                              padding: 9px 0px;
+                              margin: 0px;
+                              padding: {TEXT_PADDING}px {TEXT_PADDING}px;
                               font-family: inherit;
-                              width: 100%;
-                              height: 100%;
+                              width: {width}px;
+                              height: {height}px;
                               outline:none;
                               background: transparent;
                               border: none;
@@ -214,37 +227,16 @@ pub fn Node(id: Uuid, store: Store) -> Element {
                               overflow:hidden;
                               font-size: {font_size}px;
                               display: block;
-                              line-height: 1.2",
+                              line-height: {measure_line_height() + 0.3}px",
                             oninput: move |evt| {
                                 store.graph.update_node(id, NodeProperty::Text(evt.value().clone()));
                             },
                         }
-                    } else {
-                        div {
-                            style: "
-                                vertical-align: top;
-                                line-height: 1.2;
-                                padding-left: 2px;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                width: 100%;
-                                height: 100%;
-                                overflow: hidden;
-                                white-space: pre-wrap;
-                                word-wrap: break-word;
-                                text-align: center;
-                                font-size: {font_size}px;
-                                background: transparent;
-                                color: black;
-                                pointer-events: none;
-                                -webkit-user-select: none;
-                                -moz-user-select: none;
-                                -ms-user-select: none;
-                                user-select: none;
-                                font-family: inherit;",
-                            {node.text}
-                        }
+                    }
+                } else {
+                    g { transform: format!("translate({},{})", -width / 2.0, -height / 2.0),
+
+                        NodeLabel { label: node.text }
                     }
                 }
             }
