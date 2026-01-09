@@ -9,8 +9,8 @@ use dioxus::prelude::*;
 use std::rc::Rc;
 
 #[component]
-pub fn Mindmap() -> Element {
-    let store = Store::new();
+pub fn Mindmap(channel_id: String) -> Element {
+    let store = Store::new(channel_id);
     let mut pane = store.pane;
     let mut graph = store.graph;
 
